@@ -1,0 +1,3 @@
+antlr4 MiniC.g4
+javac MiniC*.java
+grun MiniC program [program name] -gui
