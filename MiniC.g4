@@ -56,7 +56,7 @@ expr0: identifier
     | literal
     | method_call
     | NOT expr
-    | NEGATE expr
+    | SUB expr
     | '(' expr ')'
     | READ_INT'(' ')'
     | READ_CHAR'(' ')'

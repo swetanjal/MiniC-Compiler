@@ -682,7 +682,7 @@ public class MiniCParser extends Parser {
 				setState(156);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << FALSE) | (1L << TRUE) | (1L << NOT) | (1L << NEGATE) | (1L << READ_INT) | (1L << READ_CHAR) | (1L << READ_BOOL) | (1L << INT_LIT) | (1L << FLOAT_LIT) | (1L << CHAR_LIT) | (1L << ID) | (1L << STRING_LIT))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << FALSE) | (1L << TRUE) | (1L << NOT) | (1L << SUB) | (1L << READ_INT) | (1L << READ_CHAR) | (1L << READ_BOOL) | (1L << INT_LIT) | (1L << FLOAT_LIT) | (1L << CHAR_LIT) | (1L << ID) | (1L << STRING_LIT))) != 0)) {
 					{
 					setState(148);
 					expr();
@@ -901,7 +901,7 @@ public class MiniCParser extends Parser {
 			setState(208);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << FALSE) | (1L << TRUE) | (1L << NOT) | (1L << NEGATE) | (1L << READ_INT) | (1L << READ_CHAR) | (1L << READ_BOOL) | (1L << INT_LIT) | (1L << FLOAT_LIT) | (1L << CHAR_LIT) | (1L << ID) | (1L << STRING_LIT))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << FALSE) | (1L << TRUE) | (1L << NOT) | (1L << SUB) | (1L << READ_INT) | (1L << READ_CHAR) | (1L << READ_BOOL) | (1L << INT_LIT) | (1L << FLOAT_LIT) | (1L << CHAR_LIT) | (1L << ID) | (1L << STRING_LIT))) != 0)) {
 				{
 				setState(200);
 				expr();
@@ -1740,7 +1740,7 @@ public class MiniCParser extends Parser {
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public TerminalNode NEGATE() { return getToken(MiniCParser.NEGATE, 0); }
+		public TerminalNode SUB() { return getToken(MiniCParser.SUB, 0); }
 		public TerminalNode READ_INT() { return getToken(MiniCParser.READ_INT, 0); }
 		public TerminalNode READ_CHAR() { return getToken(MiniCParser.READ_CHAR, 0); }
 		public TerminalNode READ_BOOL() { return getToken(MiniCParser.READ_BOOL, 0); }
@@ -1799,7 +1799,7 @@ public class MiniCParser extends Parser {
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(328);
-				match(NEGATE);
+				match(SUB);
 				setState(329);
 				expr();
 				}
@@ -2447,7 +2447,7 @@ public class MiniCParser extends Parser {
 		"\2\2\u0140\u013a\3\2\2\2\u0140\u013d\3\2\2\2\u0141\u0144\3\2\2\2\u0142"+
 		"\u0140\3\2\2\2\u0142\u0143\3\2\2\2\u0143%\3\2\2\2\u0144\u0142\3\2\2\2"+
 		"\u0145\u015a\5(\25\2\u0146\u015a\5*\26\2\u0147\u015a\5\22\n\2\u0148\u0149"+
-		"\7\r\2\2\u0149\u015a\5\24\13\2\u014a\u014b\7\16\2\2\u014b\u015a\5\24\13"+
+		"\7\r\2\2\u0149\u015a\5\24\13\2\u014a\u014b\7\36\2\2\u014b\u015a\5\24\13"+
 		"\2\u014c\u014d\7\5\2\2\u014d\u014e\5\24\13\2\u014e\u014f\7\6\2\2\u014f"+
 		"\u015a\3\2\2\2\u0150\u0151\7,\2\2\u0151\u0152\7\5\2\2\u0152\u015a\7\6"+
 		"\2\2\u0153\u0154\7-\2\2\u0154\u0155\7\5\2\2\u0155\u015a\7\6\2\2\u0156"+
