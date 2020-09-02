@@ -1,0 +1,14 @@
+int i, j;
+int main()
+{
+    int a;
+    a = read_int();
+    if(a == 0)
+    {
+        print('N');
+    }
+    else{
+        print('Y');
+    }
+    return 0;
+}
