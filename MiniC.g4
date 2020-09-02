@@ -25,7 +25,7 @@ type: INT | UINT | BOOL | CHAR;
 statement: assignment (',' assignment)* ';' 
         | method_call ';'
         | IF '(' expr ')' block (ELSE block)?
-        | FOR '(' (assignment (',' assignment)* )? ';' (expr (',' expr)*)? ';' (expr (',' expr)*)? ')' block
+        | FOR '(' (assignment (',' assignment)* )? ';' (expr (',' expr)*)? ';' (assignment (',' assignment)*)? ')' block
         | WHILE '(' expr ')' block
         | BREAK ';'
         | CONTINUE ';'
@@ -41,12 +41,18 @@ assignment: identifier ASSIGN expr;
 method_call: ID '(' (expr (',' expr)*)? ')';
 
 // Rule 10
-expr: identifier
-    | expr arithmetic_op expr
-    | expr relational_op expr
-    | expr conditional_op expr
-    | expr equality_op expr
-    | expr THEN expr OTHERWISE expr
+expr: expr8;
+
+expr8: expr8 THEN expr8 OTHERWISE expr8 | expr7;
+expr7: expr7 OR expr6 | expr6;
+expr6: expr6 AND expr5 | expr5;
+expr5: expr5 EQ expr4 | expr5 NE expr4 | expr4;
+expr4: expr4 GT expr3 | expr4 GE expr3 | expr3;
+expr3: expr3 LT expr2 | expr3 LE expr2 | expr2;
+expr2: expr2 ADD expr1 | expr2 SUB expr1 | expr1;
+expr1: expr1 MUL expr0 | expr1 DIV expr0 | expr1 MOD expr0 | expr0;
+
+expr0: identifier
     | literal
     | method_call
     | NOT expr

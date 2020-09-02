@@ -107,6 +107,96 @@ public interface MiniCListener extends ParseTreeListener {
 	 */
 	void exitExpr(MiniCParser.ExprContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr8}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr8(MiniCParser.Expr8Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr8}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr8(MiniCParser.Expr8Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr7}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr7(MiniCParser.Expr7Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr7}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr7(MiniCParser.Expr7Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr6}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr6(MiniCParser.Expr6Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr6}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr6(MiniCParser.Expr6Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr5}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr5(MiniCParser.Expr5Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr5}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr5(MiniCParser.Expr5Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr4}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr4(MiniCParser.Expr4Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr4}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr4(MiniCParser.Expr4Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr3}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr3(MiniCParser.Expr3Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr3}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr3(MiniCParser.Expr3Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr2}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr2(MiniCParser.Expr2Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr2}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr2(MiniCParser.Expr2Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr1}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr1(MiniCParser.Expr1Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr1}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr1(MiniCParser.Expr1Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link MiniCParser#expr0}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr0(MiniCParser.Expr0Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link MiniCParser#expr0}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr0(MiniCParser.Expr0Context ctx);
+	/**
 	 * Enter a parse tree produced by {@link MiniCParser#identifier}.
 	 * @param ctx the parse tree
 	 */
