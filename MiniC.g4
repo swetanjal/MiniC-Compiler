@@ -19,7 +19,7 @@ method_decl: (type | VOID) ID '(' (type identifier (',' type identifier)*)? ')' 
 // Rule 5
 block: '{' (var_decl)* (statement)* '}';
 // Rule 6
-type: INT | UINT | BOOL | CHAR | FILE | STRING;
+type: INT | UINT | BOOL | CHAR | FILE | STRING | FLOAT;
 
 // Rule 7
 statement: assignment (',' assignment)* ';' 
@@ -103,6 +103,7 @@ NEGATE: '~';
 VOID: 'void';
 
 // Rule 6
+FLOAT: 'float';
 INT: 'int';
 FILE: 'FILE';
 STRING: 'string';
@@ -202,7 +203,7 @@ READ_BOOL: 'read_bool';
 INT_LIT : [0-9][0-9]*;
 
 // Rule 44
-FLOAT_LIT: [0-9][0-9]*(.[0-9][0-9]*)?;
+FLOAT_LIT: [0-9][0-9]*('.'[0-9][0-9]*)?;
 
 // Rule 45
 CHAR_LIT: '\''[a-zA-Z0-9 _.,;]'\'' | '\'' '\\'[nt] '\'' ;
