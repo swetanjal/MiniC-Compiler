@@ -30,8 +30,9 @@ statement: assignment (',' assignment)* ';'
         | BREAK ';'
         | CONTINUE ';'
         | block
-        | RETURN expr ';'
+        | RETURN expr? ';'
         | PRINT '(' expr ')' ';'
+        | PRINTLN '(' expr ')' ';'
         ;
 
 // Rule 8
@@ -63,7 +64,7 @@ expr0: identifier
     | READ_BOOL'(' ')';
 
 // Rule 11
-identifier: ID | ID('[' expr ']');
+identifier: ID | ID('[' expr ']')*;
 
 // Rule 12
 literal: INT_LIT | FLOAT_LIT | CHAR_LIT | STRING_LIT | bool_lit;
@@ -184,7 +185,7 @@ ASSIGN: '=';
 
 // Rule 33
 PRINT: 'print';
-
+PRINTLN: 'println';
 // Rule 34
 READ_INT: 'read_int';
 
