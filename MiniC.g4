@@ -19,7 +19,7 @@ method_decl: (type | VOID) ID '(' (type identifier (',' type identifier)*)? ')' 
 // Rule 5
 block: '{' (var_decl)* (statement)* '}';
 // Rule 6
-type: INT | UINT | BOOL | CHAR;
+type: INT | UINT | BOOL | CHAR | FILE | STRING;
 
 // Rule 7
 statement: assignment (',' assignment)* ';' 
@@ -104,7 +104,8 @@ VOID: 'void';
 
 // Rule 6
 INT: 'int';
-
+FILE: 'FILE';
+STRING: 'string';
 // Rule 7
 CHAR: 'char';
 
@@ -204,11 +205,11 @@ INT_LIT : [0-9][0-9]*;
 FLOAT_LIT: [0-9][0-9]*(.[0-9][0-9]*)?;
 
 // Rule 45
-CHAR_LIT: '\''[a-zA-Z0-9 _.,;]'\'';
+CHAR_LIT: '\''[a-zA-Z0-9 _.,;]'\'' | '\'' '\\'[nt] '\'' ;
 // Rule 46
 ID : [a-zA-Z_][a-zA-Z0-9_]*;
 
 // Rule 47
-STRING_LIT: '"'[a-zA-Z0-9 _.,;]*'"';
+STRING_LIT: '"'[a-zA-Z0-9 _.,;\\]*'"';
 // Additional Rule to skip white spaces in ANTLR4.
 WS: [ \n\t\r]+ -> skip;

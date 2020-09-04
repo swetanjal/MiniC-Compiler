@@ -1,4 +1,6 @@
-int A[1000000];
+FILE fp;
+int c;
+string A[1000000];
 
 void sort(int l, int r)
 {
@@ -46,14 +48,48 @@ void sort(int l, int r)
     }
 }
 
+
 int main()
 {
-    for(i = 0; i < N; i = i + 1){
-        A[i] = read_int();
+    int res, i;
+    string curr;
+    curr = "";
+    c = 0;
+    res = 0;
+    fp = fopen("test.txt", "r");
+    while(true)
+    {
+        c = fgetc(fp);
+        if(c == '\n' || c == ' ')
+        {
+            A[c] = curr;
+            c = c + 1;
+            curr = "";
+            continue;
+        }
+        else
+        {
+            curr = curr + c;
+        }
+        if(c == EOF){
+            A[c] = curr;
+            c = c + 1;
+            curr = "";
+            break;
+        }
     }
-    sort(0, N - 1);    
-    for(i = 0; i < N; i = i + 1){
-        print(A[i] + " ");
+    sort(0, c - 1);
+    for(i = 1; i < c; i = i + 1)
+    {
+        if(A[i] == A[i - 1])
+        {
+            continue;
+        }
+        else{
+            res = res + 1;
+        }
     }
+    res = res + 1;
+    println("Number of unique words is " + res);
     return 0;
 }

@@ -1,6 +1,6 @@
 int main()
 {
     int a;
-    a = 3 - 7;
+    a = '\t';
     return 0;
 }
