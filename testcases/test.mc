@@ -1,6 +1,5 @@
 int main()
 {
-    float a;
-    a = (b = 7);
+    a = "hello\n" + '\n';
     return 0;
 }
