@@ -8,7 +8,9 @@ Macro Syntax
 program: (decl)+ EOF ;
 
 // Rule 2
-decl: var_decl | method_decl;
+decl: var_decl    #varDecl 
+    | method_decl #methodDecl
+    ;
 
 // Rule 3
 var_decl: type identifier (',' identifier)* ';' ;
@@ -19,20 +21,27 @@ method_decl: (type | VOID) ID '(' (type identifier (',' type identifier)*)? ')' 
 // Rule 5
 block: '{' (var_decl)* (statement)* '}';
 // Rule 6
-type: INT | UINT | BOOL | CHAR | FILE | STRING | FLOAT;
+type: INT     #typeInt 
+    | UINT    #typeUint
+    | BOOL    #typeBool
+    | CHAR    #typeChar
+    | FILE    #typeFile
+    | STRING  #typeString
+    | FLOAT   #typeFloat
+    ; 
 
 // Rule 7
-statement: assignment (',' assignment)* ';' 
-        | method_call ';'
-        | IF '(' expr ')' block (ELSE block)?
-        | FOR '(' (assignment (',' assignment)* )? ';' (expr (',' expr)*)? ';' (assignment (',' assignment)*)? ')' block
-        | WHILE '(' expr ')' block
-        | BREAK ';'
-        | CONTINUE ';'
-        | block
-        | RETURN expr? ';'
-        | PRINT '(' expr ')' ';'
-        | PRINTLN '(' expr ')' ';'
+statement: assignment (',' assignment)* ';'    #listAssn 
+        | method_call ';'                      #methodCall
+        | IF '(' expr ')' block (ELSE block)?  #if
+        | FOR '(' (assignment (',' assignment)* )? ';' (expr (',' expr)*)? ';' (assignment (',' assignment)*)? ')' block #for
+        | WHILE '(' expr ')' block             #while
+        | BREAK ';'                            #break
+        | CONTINUE ';'                         #contiue
+        | block                                #blck
+        | RETURN expr? ';'                     #return
+        | PRINT '(' expr ')' ';'               #print
+        | PRINTLN '(' expr ')' ';'             #println
         ;
 
 // Rule 8
@@ -44,45 +53,77 @@ method_call: ID '(' (expr (',' expr)*)? ')';
 // Rule 10
 expr: expr8;
 
-expr8: expr8 THEN expr8 OTHERWISE expr8 | expr7;
-expr7: expr7 OR expr6 | expr6;
-expr6: expr6 AND expr5 | expr5;
-expr5: expr5 EQ expr4 | expr5 NE expr4 | expr4;
-expr4: expr4 GT expr3 | expr4 GE expr3 | expr3;
-expr3: expr3 LT expr2 | expr3 LE expr2 | expr2;
-expr2: expr2 ADD expr1 | expr2 SUB expr1 | expr1;
-expr1: expr1 MUL expr0 | expr1 DIV expr0 | expr1 MOD expr0 | expr0;
+expr8: expr8 THEN expr8 OTHERWISE expr8 #ternary_expr
+    | expr7                             #expr8_7
+    ;
+expr7: expr7 OR expr6                   #or_expr
+    | expr6                             #expr7_6
+    ;
+expr6: expr6 AND expr5                  #and_expr
+    | expr5                             #expr6_5
+    ;
+expr5: expr5 EQ expr4                   #eq_expr
+    | expr5 NE expr4                    #ne_expr
+    | expr4                             #expr5_4
+    ;
+expr4: expr4 GT expr3                   #gt_expr
+    | expr4 GE expr3                    #ge_expr
+    | expr3                             #expr4_3
+    ;
+expr3: expr3 LT expr2                   #lt_expr
+    | expr3 LE expr2                    #le_expr
+    | expr2                             #expr3_2
+    ;
+expr2: expr2 ADD expr1                  #add_expr
+    | expr2 SUB expr1                   #sub_expr
+    | expr1                             #expr2_1
+    ;
+expr1: expr1 MUL expr0                  #mul_expr
+    | expr1 DIV expr0                   #div_expr
+    | expr1 MOD expr0                   #mod_expr
+    | expr0                             #expr1_0
+    ;
 
-expr0: identifier
-    | literal
-    | method_call
-    | NOT expr
-    | SUB expr
-    | '(' expr ')'
-    | READ_INT'(' ')'
-    | READ_CHAR'(' ')'
-    | READ_BOOL'(' ')';
+expr0: identifier                        #id_expr
+    | literal                            #lit_expr
+    | method_call                        #call_expr
+    | NOT expr                           #not_expr
+    | SUB expr                           #negate_expr
+    | '(' expr ')'                       #bracket_expr
+    | READ_INT'(' ')'                    #inp_int
+    | READ_CHAR'(' ')'                   #inp_char
+    | READ_BOOL'(' ')'                   #inp_bool
+    ;               
 
 // Rule 11
-identifier: ID | ID('[' expr ']')*;
+identifier: ID                     #var 
+        | ID('[' expr ']')*        #var_array
+        ;
 
 // Rule 12
-literal: INT_LIT | FLOAT_LIT | CHAR_LIT | STRING_LIT | bool_lit;
+literal: INT_LIT          #int_lit
+    | FLOAT_LIT           #float_lit
+    | CHAR_LIT            #char_lit
+    | STRING_LIT          #str_lit
+    | bool_lit            #bool_literal
+    ;
 
 // Rule 13
-bool_lit: TRUE | FALSE;
+bool_lit: TRUE            #true_lit 
+    | FALSE               #false_lit
+    ;   
 
 // Rule 14
-arithmetic_op: ADD | SUB | MUL | DIV | MOD;
+// arithmetic_op: ADD | SUB | MUL | DIV | MOD;
 
 // Rule 15
-relational_op: LT | GT | LE | GE;
+// relational_op: LT | GT | LE | GE;
 
 // Rule 16
-conditional_op: AND | OR;
+// conditional_op: AND | OR;
 
 // Rule 17
-equality_op: EQ | NE;
+// equality_op: EQ | NE;
 
 /*
 Micro Syntax
