@@ -16,7 +16,9 @@ decl: var_decl    #varDecl
 var_decl: type identifier (',' identifier)* ';' ;
 
 // Rule 4
-method_decl: (type | VOID) ID '(' (type identifier (',' type identifier)*)? ')' block;
+method_decl: type ID '(' (type identifier (',' type identifier)*)? ')' block   #method_decl_type
+        | VOID ID '(' (type identifier (',' type identifier)*)? ')' block      #method_decl_void
+        ;
 
 // Rule 5
 block: '{' (var_decl)* (statement)* '}';

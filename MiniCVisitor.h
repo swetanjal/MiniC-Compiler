@@ -27,7 +27,9 @@ public:
 
     virtual antlrcpp::Any visitVar_decl(MiniCParser::Var_declContext *context) = 0;
 
-    virtual antlrcpp::Any visitMethod_decl(MiniCParser::Method_declContext *context) = 0;
+    virtual antlrcpp::Any visitMethod_decl_type(MiniCParser::Method_decl_typeContext *context) = 0;
+
+    virtual antlrcpp::Any visitMethod_decl_void(MiniCParser::Method_decl_voidContext *context) = 0;
 
     virtual antlrcpp::Any visitBlock(MiniCParser::BlockContext *context) = 0;
 

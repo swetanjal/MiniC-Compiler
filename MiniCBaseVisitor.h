@@ -31,7 +31,11 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitMethod_decl(MiniCParser::Method_declContext *ctx) override {
+  virtual antlrcpp::Any visitMethod_decl_type(MiniCParser::Method_decl_typeContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual antlrcpp::Any visitMethod_decl_void(MiniCParser::Method_decl_voidContext *ctx) override {
     return visitChildren(ctx);
   }
 

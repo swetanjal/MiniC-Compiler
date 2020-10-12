@@ -24,13 +24,13 @@ int main(int argc, const char* argv[]) {
     CommonTokenStream tokens(&lexer);
     MiniCParser parser(&tokens);    
 
-    /*ExprParser::ProgContext *ctx = parser.prog();
+    MiniCParser::ProgramContext *ctx = parser.program();
 
-    ExprVisitor *visitor = new ExprBuildASTVisitor();
+    MiniCVisitor *visitor = new MiniCBuildASTVisitor();
 
-    ASTProg *program_root = visitor->visitProg(ctx);
+    ASTProg *program_root = visitor->visitProgram(ctx);
     
-    PostFixVisitor *pv = new PostFixVisitor();
+    /*PostFixVisitor *pv = new PostFixVisitor();
     pv->visit(*program_root);
     */
     return 0;

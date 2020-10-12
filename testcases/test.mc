@@ -1,5 +1,5 @@
-int main()
+int a,b,c,d;
+int main(int v, float c)
 {
-    a = "hello\n" + '\n';
-    return 0;
+
 }

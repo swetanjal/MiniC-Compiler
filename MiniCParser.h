@@ -130,18 +130,43 @@ public:
   class  Method_declContext : public antlr4::ParserRuleContext {
   public:
     Method_declContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    Method_declContext() = default;
+    void copyFrom(Method_declContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  Method_decl_voidContext : public Method_declContext {
+  public:
+    Method_decl_voidContext(Method_declContext *ctx);
+
+    antlr4::tree::TerminalNode *VOID();
     antlr4::tree::TerminalNode *ID();
     BlockContext *block();
     std::vector<TypeContext *> type();
     TypeContext* type(size_t i);
-    antlr4::tree::TerminalNode *VOID();
     std::vector<IdentifierContext *> identifier();
     IdentifierContext* identifier(size_t i);
 
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Method_decl_typeContext : public Method_declContext {
+  public:
+    Method_decl_typeContext(Method_declContext *ctx);
+
+    std::vector<TypeContext *> type();
+    TypeContext* type(size_t i);
+    antlr4::tree::TerminalNode *ID();
+    BlockContext *block();
+    std::vector<IdentifierContext *> identifier();
+    IdentifierContext* identifier(size_t i);
 
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-   
   };
 
   Method_declContext* method_decl();
