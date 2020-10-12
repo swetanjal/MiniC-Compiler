@@ -10,7 +10,7 @@ void add(ASTVarDecl* node)
         cout << "Semantic Error: Variable " << node->id->name << " is being redeclared.\n"; 
     }
     else{
-        curr_table->var_decl[node->id->name].push_back(NULL);
+        curr_table->var_decl[node->id->name].push_back(node);
         curr_table->dims[node->id->name] = node->id->addrs.size();
     }
 }
@@ -55,7 +55,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             ASTVarDecl *node = new ASTVarDecl();
             node -> type = "var";
             node->dat = visit(ctx->type());
-
+            node->val = NULL;
             node->id = visit(ctx->identifier(c));
             
             add(node);
@@ -75,23 +75,22 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->return_type = visit(context->type(0));
         node->name = context->ID()->getText();
 
+
         int c = 1;
         while(context->type(c) != NULL){
             ASTVarDecl *node_tmp = new ASTVarDecl;
             node_tmp->type = "var";
             node_tmp->dat = visit(context->type(c));
             node_tmp->id = visit(context->identifier(c - 1));
-
+            node_tmp->val = NULL;
             add(node_tmp);
 
 
             node->args.push_back(node_tmp);
             c++;
         }
-        node->block = visit(context->block());
-
         add(node);
-
+        node->block = visit(context->block());
         vec.push_back(node);
         return vec;
         // return (ASTDecl *)node;
@@ -111,17 +110,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node_tmp->type = "var";
             node_tmp->dat = visit(context->type(c));
             node_tmp->id = visit(context->identifier(c));
-            
+            node_tmp->val = NULL;
             add(node_tmp);
             
             node->args.push_back(node_tmp);
             c++;
         }
-
-        node->block = visit(context->block());
-        
         add(node);
-
+        node->block = visit(context->block());
         vec.push_back(node);
         return vec;
         // return (ASTDecl *)node;
@@ -244,6 +240,15 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->id = visit(ctx->identifier());
         node->expr = visit(ctx->expr());
 
+        if(curr_table->method_decl.find(node->id->name) != curr_table->method_decl.end()){
+            cout << "Semantic Error: Conflicting Method name " << node->id->name << endl;
+        }
+        else if(curr_table->var_decl.find(node->id->name) == curr_table->var_decl.end()){
+            cout << "Semantic Error: Variable " << node->id->name <<  " being used before declaration\n";
+        }
+        else{
+            ((ASTVarDecl *)curr_table->var_decl[node->id->name][0])->val = node->expr;
+        }
         // cout << ((ASTINTLIT*)(node->expr))->value;
         return (ASTAssign *) node;
     }
