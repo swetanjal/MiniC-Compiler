@@ -1,8 +1,29 @@
 #include <bits/stdc++.h>
 #include "ast.h"
 #include "MiniCVisitor.h"
-
+#include "symboltable.h"
 using namespace std;
+
+void add(ASTVarDecl* node)
+{
+    if(curr_table->method_decl.find(node->id->name) != curr_table->method_decl.end() || curr_table->var_decl.find(node->id->name) != curr_table->var_decl.end()){
+        cout << "Semantic Error: Variable " << node->id->name << " is being redeclared.\n"; 
+    }
+    else{
+        curr_table->var_decl[node->id->name].push_back(NULL);
+        curr_table->dims[node->id->name] = node->id->addrs.size();
+    }
+}
+
+void add(ASTMethodDecl* node)
+{
+    if(curr_table->method_decl.find(node->name) != curr_table->method_decl.end() || curr_table->var_decl.find(node->name) != curr_table->var_decl.end()){
+        cout << "Semantic Error: Method " << node->name << " is being redeclared.\n"; 
+    }
+    else{
+        curr_table->method_decl[node->name] = node;
+    }
+}
 
 class MiniCBuildASTVisitor : public MiniCVisitor
 {
@@ -11,7 +32,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     {
         ASTProg *node = new ASTProg();
         for(auto decl: context->decl()){
-            node->declarations.push_back(visit(decl));
+            vector <ASTDecl*> vec = visit(decl);
+            for(auto it: vec){
+                node->declarations.push_back(it);
+            }
         }
         return node;
     }
@@ -25,53 +49,82 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitVar_decl(MiniCParser::Var_declContext *ctx) override {
-        ASTVarDecl *node = new ASTVarDecl();
-        node -> type = "var";
-
-        node->dat = visit(ctx->type());
+        vector <ASTDecl*> vec;
         int c = 0;
         while(ctx->identifier(c) != NULL){
-            node->ids.push_back(visit(ctx->identifier(c)));
+            ASTVarDecl *node = new ASTVarDecl();
+            node -> type = "var";
+            node->dat = visit(ctx->type());
+
+            node->id = visit(ctx->identifier(c));
+            
+            add(node);
+
+            vec.push_back(node);
             c++;
         }
-        return (ASTDecl *)node;
+        return vec;
+        // return (ASTDecl *)node;
     }
 
     virtual antlrcpp::Any visitMethod_decl_type(MiniCParser::Method_decl_typeContext *context) override
     {
+        vector <ASTDecl*> vec;
         ASTMethodDecl *node = new ASTMethodDecl();
         node -> type = "meth";
         node->return_type = visit(context->type(0));
+        node->name = context->ID()->getText();
 
         int c = 1;
         while(context->type(c) != NULL){
             ASTVarDecl *node_tmp = new ASTVarDecl;
+            node_tmp->type = "var";
             node_tmp->dat = visit(context->type(c));
-            node_tmp->ids.push_back(visit(context->identifier(c - 1)));
+            node_tmp->id = visit(context->identifier(c - 1));
+
+            add(node_tmp);
+
+
             node->args.push_back(node_tmp);
             c++;
         }
         node->block = visit(context->block());
-        return (ASTDecl *)node;
+
+        add(node);
+
+        vec.push_back(node);
+        return vec;
+        // return (ASTDecl *)node;
     }
 
     virtual antlrcpp::Any visitMethod_decl_void(MiniCParser::Method_decl_voidContext *context) override
     {
+        vector <ASTDecl*> vec;
         ASTMethodDecl *node = new ASTMethodDecl();
         node -> type = "meth";
         node->return_type = NULL;
+        node->name = context->ID()->getText();
 
         int c = 0;
         while(context->type(c) != NULL){
             ASTVarDecl *node_tmp = new ASTVarDecl;
+            node_tmp->type = "var";
             node_tmp->dat = visit(context->type(c));
-            node_tmp->ids.push_back(visit(context->identifier(c)));
+            node_tmp->id = visit(context->identifier(c));
+            
+            add(node_tmp);
+            
             node->args.push_back(node_tmp);
             c++;
         }
 
         node->block = visit(context->block());
-        return (ASTDecl *)node;
+        
+        add(node);
+
+        vec.push_back(node);
+        return vec;
+        // return (ASTDecl *)node;
     }
 
     virtual antlrcpp::Any visitBlock(MiniCParser::BlockContext *ctx) override {
@@ -79,16 +132,18 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
         int c = 0;
         while(ctx->var_decl(c) != NULL){
-            node->var_declarations.push_back(visit(ctx->var_decl(c)));
+            vector <ASTDecl*> vec = visit(ctx->var_decl(c));
+            for(auto it: vec)
+                node->var_declarations.push_back(it);
             c++;
         }
-        cout << node->var_declarations.size() << " declarations\n";
+        // cout << node->var_declarations.size() << " declarations\n";
         c = 0;
         while(ctx->statement(c) != NULL){
             node->statements.push_back(visit(ctx->statement(c)));
             c++;
         }
-        cout << node->statements.size() << " statements\n";
+        // cout << node->statements.size() << " statements\n";
         return (ASTBlock *)node;
     }
 
@@ -415,6 +470,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitInt_lit(MiniCParser::Int_litContext *ctx) override {
         ASTINTLIT *node = new ASTINTLIT();
         node->type = "int_lit";
+        node->eval_type = "int";
         node->value = stoi(ctx->INT_LIT()->getText());
         return (ASTExpr *)node;
     }
@@ -422,6 +478,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitFloat_lit(MiniCParser::Float_litContext *ctx) override {
         ASTFLOATLIT *node = new ASTFLOATLIT();
         node->type = "float_lit";
+        node->eval_type = "float";
         node->value = stof(ctx->FLOAT_LIT()->getText());
         return (ASTExpr *)node;
     }
@@ -429,6 +486,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitChar_lit(MiniCParser::Char_litContext *ctx) override {
         ASTCHARLIT *node = new ASTCHARLIT();
         node->type = "char_lit";
+        node->eval_type = "char";
         node->value = (ctx->CHAR_LIT()->getText())[0];
         return (ASTExpr *)node;
     }
@@ -436,6 +494,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitStr_lit(MiniCParser::Str_litContext *ctx) override {
         ASTSTRINGLIT *node = new ASTSTRINGLIT();
         node->type = "string_lit";
+        node->eval_type = "string";
         node->value = (ctx->STRING_LIT()->getText());
         return (ASTExpr *)node;
     }
@@ -447,6 +506,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitTrue_lit(MiniCParser::True_litContext *ctx) override {
         ASTBOOLLIT *node = new ASTBOOLLIT();
         node->type = "bool_lit";
+        node->eval_type = "bool";
         node->value = "true";
         return (ASTExpr *)node;
     }
@@ -455,6 +515,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         ASTBOOLLIT *node = new ASTBOOLLIT();
         node->type = "bool_lit";
         node->value = "false";
+        node->eval_type = "bool";
         return (ASTExpr *)node;
     }
 };

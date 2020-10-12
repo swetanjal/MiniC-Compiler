@@ -23,9 +23,8 @@ int main(int argc, const char* argv[]) {
     MiniCLexer lexer(&input);
     CommonTokenStream tokens(&lexer);
     MiniCParser parser(&tokens);    
-
+    curr_table->prev = NULL;
     MiniCParser::ProgramContext *ctx = parser.program();
-
     MiniCVisitor *visitor = new MiniCBuildASTVisitor();
 
     ASTProg *program_root = visitor->visitProgram(ctx);

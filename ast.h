@@ -80,6 +80,7 @@ class ASTExpr : public ASTnode
     {
 
     }
+    string eval_type; // Would be useful to do type checking. 
     string type; // "bin" "ter" "id" "*_lit" "call" "not" "neg" "inp_int" "inp_char" "inp_bool" "exp"
     virtual void accept(ASTvisitor &V) = 0;
 };
@@ -110,7 +111,8 @@ class ASTVarDecl : public ASTDecl
 {
     public:
     ASTDtype* dat;
-    vector <ASTID*> ids;
+    ASTID* id;
+    ASTExpr* val;
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
@@ -119,6 +121,7 @@ class ASTVarDecl : public ASTDecl
 class ASTMethodDecl : public ASTDecl
 {
     public:
+    string name;
     ASTDtype* return_type;
     vector <ASTVarDecl*> args;
     ASTBlock* block;

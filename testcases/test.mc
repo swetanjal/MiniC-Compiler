@@ -1,6 +1,5 @@
-int a,b,c,d;
-int main(int v, float c)
+int a;
+int main(float a, float b)
 {
-    int a, b;
-    a = 5;
+    int a;
 }
