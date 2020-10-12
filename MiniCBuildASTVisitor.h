@@ -51,6 +51,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->args.push_back(node_tmp);
             c++;
         }
+        node->block = visit(context->block());
         return (ASTDecl *)node;
     }
 
@@ -68,11 +69,27 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->args.push_back(node_tmp);
             c++;
         }
+
+        node->block = visit(context->block());
         return (ASTDecl *)node;
     }
 
     virtual antlrcpp::Any visitBlock(MiniCParser::BlockContext *ctx) override {
-        return visitChildren(ctx);
+        ASTBlock *node = new ASTBlock();
+
+        int c = 0;
+        while(ctx->var_decl(c) != NULL){
+            node->var_declarations.push_back(visit(ctx->var_decl(c)));
+            c++;
+        }
+        cout << node->var_declarations.size() << " declarations\n";
+        c = 0;
+        while(ctx->statement(c) != NULL){
+            node->statements.push_back(visit(ctx->statement(c)));
+            c++;
+        }
+        cout << node->statements.size() << " statements\n";
+        return (ASTBlock *)node;
     }
 
     virtual antlrcpp::Any visitTypeInt(MiniCParser::TypeIntContext *ctx) override {
@@ -118,7 +135,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitListAssn(MiniCParser::ListAssnContext *ctx) override {
-        return visitChildren(ctx);
+        ASTStatAssn *node = new ASTStatAssn();
+        int c = 0;
+        while(ctx->assignment(c) != NULL){
+            node->assignments.push_back(visit(ctx->assignment(c)));
+            c++;
+        }
+        return (ASTStat *) node;
     }
 
     virtual antlrcpp::Any visitMethodCall(MiniCParser::MethodCallContext *ctx) override {
@@ -162,7 +185,12 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitAssignment(MiniCParser::AssignmentContext *ctx) override {
-        return visitChildren(ctx);
+        ASTAssign *node = new ASTAssign();
+        node->id = visit(ctx->identifier());
+        node->expr = visit(ctx->expr());
+
+        // cout << ((ASTINTLIT*)(node->expr))->value;
+        return (ASTAssign *) node;
     }
 
     virtual antlrcpp::Any visitMethod_call(MiniCParser::Method_callContext *ctx) override {
@@ -170,103 +198,173 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitExpr(MiniCParser::ExprContext *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr8());
     }
 
     virtual antlrcpp::Any visitExpr8_7(MiniCParser::Expr8_7Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr7());
     }
 
     virtual antlrcpp::Any visitTernary_expr(MiniCParser::Ternary_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprTernary *node = new ASTExprTernary();
+        node->cond = visit(ctx->expr8(0));
+        node->true_expr = visit(ctx->expr8(1));
+        node->false_expr = visit(ctx->expr8(2));
+        node->type = "ter";
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr7_6(MiniCParser::Expr7_6Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr6());
     }
 
     virtual antlrcpp::Any visitOr_expr(MiniCParser::Or_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "|";
+        node->type = "bin";
+        node->left = visit(ctx->expr7());
+        node->right = visit(ctx->expr6());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitAnd_expr(MiniCParser::And_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "&";
+        node->type = "bin";
+        node->left = visit(ctx->expr6());
+        node->right = visit(ctx->expr5());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr6_5(MiniCParser::Expr6_5Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr5());
     }
 
     virtual antlrcpp::Any visitEq_expr(MiniCParser::Eq_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "==";
+        node->type = "bin";
+        node->left = visit(ctx->expr5());
+        node->right = visit(ctx->expr4());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr5_4(MiniCParser::Expr5_4Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr4());
     }
 
     virtual antlrcpp::Any visitNe_expr(MiniCParser::Ne_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "!=";
+        node->type = "bin";
+        node->left = visit(ctx->expr5());
+        node->right = visit(ctx->expr4());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitGe_expr(MiniCParser::Ge_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = ">=";
+        node->type = "bin";
+        node->left = visit(ctx->expr4());
+        node->right = visit(ctx->expr3());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitGt_expr(MiniCParser::Gt_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = ">";
+        node->type = "bin";
+        node->left = visit(ctx->expr4());
+        node->right = visit(ctx->expr3());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr4_3(MiniCParser::Expr4_3Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr3());
     }
 
     virtual antlrcpp::Any visitLt_expr(MiniCParser::Lt_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "<";
+        node->type = "bin";
+        node->left = visit(ctx->expr3());
+        node->right = visit(ctx->expr2());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr3_2(MiniCParser::Expr3_2Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr2());
     }
 
     virtual antlrcpp::Any visitLe_expr(MiniCParser::Le_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "<=";
+        node->type = "bin";
+        node->left = visit(ctx->expr3());
+        node->right = visit(ctx->expr2());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitSub_expr(MiniCParser::Sub_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "-";
+        node->type = "bin";
+        node->left = visit(ctx->expr2());
+        node->right = visit(ctx->expr1());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitAdd_expr(MiniCParser::Add_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->op = "+";
+        node->type = "bin";
+        node->left = visit(ctx->expr2());
+        node->right = visit(ctx->expr1());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr2_1(MiniCParser::Expr2_1Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr1());
     }
 
     virtual antlrcpp::Any visitMod_expr(MiniCParser::Mod_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->type = "bin";
+        node->op = "%";
+        node->left = visit(ctx->expr1());
+        node->right = visit(ctx->expr0());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitExpr1_0(MiniCParser::Expr1_0Context *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr0());
     }
 
     virtual antlrcpp::Any visitDiv_expr(MiniCParser::Div_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->type = "bin";
+        node->op = "/";
+        node->left = visit(ctx->expr1());
+        node->right = visit(ctx->expr0());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitMul_expr(MiniCParser::Mul_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprBinary *node = new ASTExprBinary();
+        node->type = "bin";
+        node->op = "*";
+        node->left = visit(ctx->expr1());
+        node->right = visit(ctx->expr0());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitId_expr(MiniCParser::Id_exprContext *ctx) override {
-        return visitChildren(ctx);
+        return (ASTExpr *)visit(ctx->identifier());
     }
 
     virtual antlrcpp::Any visitLit_expr(MiniCParser::Lit_exprContext *ctx) override {
-        return visitChildren(ctx);
+        return (ASTExpr *)visit(ctx->literal());
     }
 
     virtual antlrcpp::Any visitCall_expr(MiniCParser::Call_exprContext *ctx) override {
@@ -298,7 +396,6 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitVar(MiniCParser::VarContext *ctx) override {
-        
         ASTID* node = new ASTID();
         node->name = ctx->ID()->getText();
         return (ASTID *)node;
@@ -307,34 +404,57 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitVar_array(MiniCParser::Var_arrayContext *ctx) override {
         ASTID* node = new ASTID();
         node->name = ctx->ID()->getText();
+        int c = 0;
+        while(ctx->expr(c) != NULL){
+            node->addrs.push_back(visit(ctx->expr(c)));
+            c++;
+        }
         return (ASTID *)node;
     }
 
     virtual antlrcpp::Any visitInt_lit(MiniCParser::Int_litContext *ctx) override {
-        return visitChildren(ctx);
+        ASTINTLIT *node = new ASTINTLIT();
+        node->type = "int_lit";
+        node->value = stoi(ctx->INT_LIT()->getText());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitFloat_lit(MiniCParser::Float_litContext *ctx) override {
-        return visitChildren(ctx);
+        ASTFLOATLIT *node = new ASTFLOATLIT();
+        node->type = "float_lit";
+        node->value = stof(ctx->FLOAT_LIT()->getText());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitChar_lit(MiniCParser::Char_litContext *ctx) override {
-        return visitChildren(ctx);
+        ASTCHARLIT *node = new ASTCHARLIT();
+        node->type = "char_lit";
+        node->value = (ctx->CHAR_LIT()->getText())[0];
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitStr_lit(MiniCParser::Str_litContext *ctx) override {
-        return visitChildren(ctx);
+        ASTSTRINGLIT *node = new ASTSTRINGLIT();
+        node->type = "string_lit";
+        node->value = (ctx->STRING_LIT()->getText());
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitBool_literal(MiniCParser::Bool_literalContext *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->bool_lit());
     }
 
     virtual antlrcpp::Any visitTrue_lit(MiniCParser::True_litContext *ctx) override {
-        return visitChildren(ctx);
+        ASTBOOLLIT *node = new ASTBOOLLIT();
+        node->type = "bool_lit";
+        node->value = "true";
+        return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitFalse_lit(MiniCParser::False_litContext *ctx) override {
-        return visitChildren(ctx);
+        ASTBOOLLIT *node = new ASTBOOLLIT();
+        node->type = "bool_lit";
+        node->value = "false";
+        return (ASTExpr *)node;
     }
 };
