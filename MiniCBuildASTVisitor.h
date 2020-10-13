@@ -90,6 +90,55 @@ string newType(string a, string b)
     return "";
 }
 
+bool addCompatible(string a)
+{
+    if(a == "int")
+        return true;
+    if(a == "float")
+        return true;
+    if(a == "string")
+        return true;
+    if(a == "char")
+        return true;
+    return false;
+}
+
+bool sub_mul_div_Compatible(string a)
+{
+    if(a == "int")
+        return true;
+    if(a == "float")
+        return true;
+    return false;
+}
+
+bool mod_Compatible(string a)
+{
+    if(a == "int")
+        return true;
+    return false;
+}
+
+bool and_or_Compatible(string a)
+{
+    if(a == "int")
+        return true;
+    if(a == "bool")
+        return true;
+    return false;
+}
+
+bool logical_Compatible(string a, string b)
+{
+    if(a == b)
+        return true;
+    if(a == "int" && b == "float")
+        return true;
+    if(b == "int" && a == "float")
+        return true;
+    return false;
+}
+
 class MiniCBuildASTVisitor : public MiniCVisitor
 {
     public:
@@ -447,6 +496,20 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr2());
         node->right = visit(ctx->expr1());
+        
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
+            // Already handled before.
+        }
+        else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
+            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform Subtraction on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        }
+        
+        
         return (ASTExpr *)node;
     }
 
@@ -456,6 +519,23 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr2());
         node->right = visit(ctx->expr1());
+        
+        
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
+            // Already handled before.
+        }
+        else if(addCompatible(node->left->eval_type) && addCompatible(node->right->eval_type)){
+            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform Addition on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        }
+        
+        
+        
+        
         return (ASTExpr *)node;
     }
 
@@ -469,6 +549,22 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->op = "%";
         node->left = visit(ctx->expr1());
         node->right = visit(ctx->expr0());
+
+
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
+            // Already handled before.
+        }
+        else if(mod_Compatible(node->left->eval_type) && mod_Compatible(node->right->eval_type)){
+            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform modulo on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        }
+
+
+
         return (ASTExpr *)node;
     }
 
@@ -482,6 +578,22 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->op = "/";
         node->left = visit(ctx->expr1());
         node->right = visit(ctx->expr0());
+        
+        
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
+            // Already handled before.
+        }
+        else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
+            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform divide on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        }
+        
+        
+        
         return (ASTExpr *)node;
     }
 
@@ -492,8 +604,17 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr1());
         node->right = visit(ctx->expr0());
 
-
-
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
+            // Already handled before.
+        }
+        else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
+            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform multiplication on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        }
         return (ASTExpr *)node;
     }
 
@@ -558,6 +679,11 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         int c = 0;
         while(ctx->expr(c) != NULL){
             node->addrs.push_back(visit(ctx->expr(c)));
+
+            if(node->addrs[c]->eval_type != "int" && node->addrs[c]->eval_type != "")
+            {
+                cout << "Semantic Error: Address has to be of type int. Got " << node->addrs[c]->eval_type << endl;;
+            }
             c++;
         }
         return (ASTID*)node;
