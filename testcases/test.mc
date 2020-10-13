@@ -1,7 +1,10 @@
-int A[5];
-int main(float a, float b)
+int c;
+float d;
+string m;
+int main(int main)
 {
-    c = 6;
-    main = 4;
-    b = 6.8;
+    int c;
+    char n;
+    n = m;
+    d = 3 + true;
 }

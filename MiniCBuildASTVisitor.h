@@ -10,7 +10,7 @@ void add(ASTVarDecl* node)
         cout << "Semantic Error: Variable " << node->id->name << " is being redeclared.\n"; 
     }
     else{
-        curr_table->var_decl[node->id->name].push_back(node);
+        curr_table->var_decl[node->id->name] = node;
         curr_table->dims[node->id->name] = node->id->addrs.size();
     }
 }
@@ -23,6 +23,71 @@ void add(ASTMethodDecl* node)
     else{
         curr_table->method_decl[node->name] = node;
     }
+}
+
+void create_table()
+{
+    SymbolTable *tmp = new SymbolTable();
+    tmp->prev = curr_table;
+    curr_table = tmp;
+}
+
+void parent_table()
+{
+    curr_table = curr_table -> prev;
+}
+
+ASTDtype* look_up_variable(ASTID* node)
+{
+    SymbolTable *curr = new SymbolTable();
+    curr = curr_table;
+    while(curr != NULL){
+        if(curr->method_decl.find(node->name) != curr->method_decl.end()){
+            cout << "Semantic Error: Conflicting Method name " << node->name << endl;
+            break;
+        }
+        else if(curr->var_decl.find(node->name) != curr->var_decl.end()){
+            // TO be changed
+            return (curr->var_decl[node->name])->dat;
+        }
+        curr = curr->prev;
+    }
+    cout << "Semantic Error: Variable " << node->name <<  " being used before declaration\n";
+    return NULL;
+}
+
+bool typeMatch(string a, string b)
+{
+    if(a == b)
+        return true;
+    if(a == "float" && b == "int")
+        return true;
+    
+    if(a == "string" && b == "char")
+        return true;
+    return false;
+}
+
+string newType(string a, string b)
+{
+    if(a == "int" && b == "float"){
+        return "float";
+    }
+    if(a == "float" && b == "int"){
+        return "float";
+    }
+
+    if(a == "string" && b == "char"){
+        return "string";
+    }
+
+    if(b == "string" && a == "char"){
+        return "string";
+    }
+
+    if(a == b)
+        return a;
+    return "";
 }
 
 class MiniCBuildASTVisitor : public MiniCVisitor
@@ -77,6 +142,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
 
         int c = 1;
+        
+        add(node);
+        create_table();
+
         while(context->type(c) != NULL){
             ASTVarDecl *node_tmp = new ASTVarDecl;
             node_tmp->type = "var";
@@ -89,9 +158,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->args.push_back(node_tmp);
             c++;
         }
-        add(node);
+        
         node->block = visit(context->block());
         vec.push_back(node);
+        parent_table();
         return vec;
         // return (ASTDecl *)node;
     }
@@ -105,6 +175,11 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->name = context->ID()->getText();
 
         int c = 0;
+
+        add(node);
+
+        create_table();
+
         while(context->type(c) != NULL){
             ASTVarDecl *node_tmp = new ASTVarDecl;
             node_tmp->type = "var";
@@ -116,9 +191,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->args.push_back(node_tmp);
             c++;
         }
-        add(node);
         node->block = visit(context->block());
         vec.push_back(node);
+        parent_table();
         return vec;
         // return (ASTDecl *)node;
     }
@@ -236,18 +311,18 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitAssignment(MiniCParser::AssignmentContext *ctx) override {
+        /* Semantic Checks:
+            * Check whether variable being assigned to is same type as that of expr.
+            * If expr is "", there was an error before only and no need to throw any error here to avoid redundancy.
+        */
         ASTAssign *node = new ASTAssign();
         node->id = visit(ctx->identifier());
         node->expr = visit(ctx->expr());
 
-        if(curr_table->method_decl.find(node->id->name) != curr_table->method_decl.end()){
-            cout << "Semantic Error: Conflicting Method name " << node->id->name << endl;
-        }
-        else if(curr_table->var_decl.find(node->id->name) == curr_table->var_decl.end()){
-            cout << "Semantic Error: Variable " << node->id->name <<  " being used before declaration\n";
-        }
-        else{
-            ((ASTVarDecl *)curr_table->var_decl[node->id->name][0])->val = node->expr;
+        ASTDtype* dat = look_up_variable(node->id);
+    
+        if(dat!= NULL && typeMatch(dat->dtype, node->expr->eval_type) == false && node->expr->eval_type != ""){
+            cout << "Semantic Error: Expected " << dat->dtype << " but found " << node->expr->eval_type << endl;
         }
         // cout << ((ASTINTLIT*)(node->expr))->value;
         return (ASTAssign *) node;
@@ -416,11 +491,24 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->op = "*";
         node->left = visit(ctx->expr1());
         node->right = visit(ctx->expr0());
+
+
+
         return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitId_expr(MiniCParser::Id_exprContext *ctx) override {
-        return (ASTExpr *)visit(ctx->identifier());
+        ASTID* node = new ASTID();
+        node = visit(ctx->identifier());
+
+        ASTDtype* dat = look_up_variable(node);
+        if(dat != NULL){
+            node->eval_type = dat->dtype;
+        }
+        else{
+            node->eval_type = "";
+        }
+        return (ASTExpr*)node;
     }
 
     virtual antlrcpp::Any visitLit_expr(MiniCParser::Lit_exprContext *ctx) override {
@@ -458,10 +546,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitVar(MiniCParser::VarContext *ctx) override {
         ASTID* node = new ASTID();
         node->name = ctx->ID()->getText();
-        return (ASTID *)node;
+        return (ASTID*)node;
     }
 
     virtual antlrcpp::Any visitVar_array(MiniCParser::Var_arrayContext *ctx) override {
+        /* Semantic Checks:
+           * addrs should be int
+        */ 
         ASTID* node = new ASTID();
         node->name = ctx->ID()->getText();
         int c = 0;
@@ -469,7 +560,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->addrs.push_back(visit(ctx->expr(c)));
             c++;
         }
-        return (ASTID *)node;
+        return (ASTID*)node;
     }
 
     virtual antlrcpp::Any visitInt_lit(MiniCParser::Int_litContext *ctx) override {
