@@ -18,7 +18,8 @@ class ASTFLOATLIT;
 class ASTSTRINGLIT;
 class ASTBOOLLIT;
 class ASTCHARLIT;
-
+class ASTExprCall;
+class ASTStatCall;
 class ASTvisitor
 {
 public:
@@ -34,12 +35,13 @@ public:
     virtual void visit(ASTExprTernary &node) = 0;
     virtual void visit(ASTStat &node) = 0;
     virtual void visit(ASTBlock &node) = 0;
-
+    virtual void visit(ASTStatCall &node) = 0;
     virtual void visit(ASTINTLIT &node) = 0;
     virtual void visit(ASTFLOATLIT &node) = 0;
     virtual void visit(ASTCHARLIT &node) = 0;
     virtual void visit(ASTSTRINGLIT &node) = 0;
     virtual void visit(ASTBOOLLIT &node) = 0;
+    virtual void visit(ASTExprCall &node) = 0;
 };
 
 class ASTnode
@@ -104,7 +106,13 @@ class ASTStatAssn : public ASTStat
         V.visit(*this);
     }
 };
-
+class ASTStatCall : public ASTStat
+{
+    public:
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
 
 
 class ASTVarDecl : public ASTDecl
@@ -195,6 +203,14 @@ class ASTAssign : public ASTnode
     ASTID* id;
     ASTExpr* expr;
 
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTExprCall : public ASTExpr
+{
+    public:
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }

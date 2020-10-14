@@ -41,9 +41,11 @@ ASTDtype* look_up_variable(ASTID* node)
 {
     SymbolTable *curr = new SymbolTable();
     curr = curr_table;
+    //cout << node->name << " " << curr->method_decl.size() << endl;
     while(curr != NULL){
         if(curr->method_decl.find(node->name) != curr->method_decl.end()){
             cout << "Semantic Error: Conflicting Method name " << node->name << endl;
+            return NULL;
             break;
         }
         else if(curr->var_decl.find(node->name) != curr->var_decl.end()){
@@ -56,6 +58,48 @@ ASTDtype* look_up_variable(ASTID* node)
     return NULL;
 }
 
+int getDimensions(ASTID* node)
+{
+    SymbolTable *curr = new SymbolTable();
+    curr = curr_table;
+    //cout << node->name << " " << curr->method_decl.size() << endl;
+    while(curr != NULL){
+        if(curr->method_decl.find(node->name) != curr->method_decl.end()){
+            cout << "Semantic Error: Conflicting Method name " << node->name << endl;
+            return -1;
+            break;
+        }
+        else if(curr->var_decl.find(node->name) != curr->var_decl.end()){
+            // TO be changed
+            return curr->dims[node->name];
+        }
+        curr = curr->prev;
+    }
+    cout << "Semantic Error: Variable " << node->name <<  " being used before declaration\n";
+    return -1;
+}
+
+ASTDtype* look_up_method(string id)
+{
+    SymbolTable *curr = new SymbolTable();
+    curr = curr_table;
+    while(curr != NULL){
+        if(curr->var_decl.find(id) != curr->var_decl.end()){
+            // TO be changed
+            cout << "Semantic Error: "<< id << "() cannot be used as a function." << endl;
+            return NULL;
+        }
+        else if(curr->method_decl.find(id) != curr->method_decl.end()){
+            return curr->method_decl[id]->return_type;
+        }
+        
+        curr = curr->prev;
+    }
+    cout << "Semantic Error: Method " << id <<  "() being called before declaration\n";
+    return NULL;
+}
+
+
 bool typeMatch(string a, string b)
 {
     if(a == b)
@@ -64,6 +108,12 @@ bool typeMatch(string a, string b)
         return true;
     
     if(a == "string" && b == "char")
+        return true;
+
+    if(a == "int" && b == "char")
+        return true;
+    
+    if(a == "int" && b == "bool")
         return true;
     return false;
 }
@@ -85,6 +135,15 @@ string newType(string a, string b)
         return "string";
     }
 
+    if(a == "int" && b == "char")
+        return "int";
+    if(b == "int" && a == "char")
+        return "int";
+    
+    if(a == "int" && b == "bool")
+        return "int";
+    if(b == "int" && a == "bool")
+        return "int";
     if(a == b)
         return a;
     return "";
@@ -135,6 +194,20 @@ bool logical_Compatible(string a, string b)
     if(a == "int" && b == "float")
         return true;
     if(b == "int" && a == "float")
+        return true;
+    return false;
+}
+
+bool and_or_Compatible(string a, string b)
+{
+    return true;
+    if(a == "int" && b == "int")
+        return true;
+    if(a == "bool" && b == "bool")
+        return true;
+    if(a == "bool" && b== "int")
+        return true;
+    if(b == "bool" && a== "int")
         return true;
     return false;
 }
@@ -320,7 +393,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitMethodCall(MiniCParser::MethodCallContext *ctx) override {
-        return visitChildren(ctx);
+        auto tmp = visit(ctx->method_call());
+        ASTStatCall *node = new ASTStatCall();
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitIf(MiniCParser::IfContext *ctx) override {
@@ -369,7 +444,15 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->expr = visit(ctx->expr());
 
         ASTDtype* dat = look_up_variable(node->id);
-    
+
+        int addrs_dim = node->id->addrs.size();
+        int org_dims = getDimensions(node->id);
+        if(org_dims != addrs_dim){
+            cout << "Semantic Error: Dimensions don't match. Expected " << org_dims << " dimensions but got " << addrs_dim << " dimensions\n";
+            
+        }
+
+
         if(dat!= NULL && typeMatch(dat->dtype, node->expr->eval_type) == false && node->expr->eval_type != ""){
             cout << "Semantic Error: Expected " << dat->dtype << " but found " << node->expr->eval_type << endl;
         }
@@ -378,7 +461,17 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitMethod_call(MiniCParser::Method_callContext *ctx) override {
-        return visitChildren(ctx);
+        ASTExprCall* node = new ASTExprCall();
+        ASTDtype* dat = look_up_method(ctx->ID()->getText());
+        
+        if(dat == NULL){
+            // Issue
+            node->eval_type = "void";
+        }
+        else{
+            node->eval_type = dat->dtype;
+        }
+        return (ASTExpr*)node;
     }
 
     virtual antlrcpp::Any visitExpr(MiniCParser::ExprContext *ctx) override {
@@ -395,6 +488,11 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->true_expr = visit(ctx->expr8(1));
         node->false_expr = visit(ctx->expr8(2));
         node->type = "ter";
+        
+        if(!typeMatch(node->true_expr->eval_type, node->false_expr->eval_type)){
+            cout << "Semantic Error: Different data types for true and false expressions.\n";
+        }
+
         return (ASTExpr *)node;
     }
 
@@ -404,19 +502,47 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitOr_expr(MiniCParser::Or_exprContext *ctx) override {
         ASTExprBinary *node = new ASTExprBinary();
-        node->op = "|";
+        node->op = "||";
         node->type = "bin";
         node->left = visit(ctx->expr7());
         node->right = visit(ctx->expr6());
+        
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(and_or_Compatible(node->left->eval_type, node->right->eval_type))
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform || operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+        
+        
         return (ASTExpr *)node;
     }
 
     virtual antlrcpp::Any visitAnd_expr(MiniCParser::And_exprContext *ctx) override {
         ASTExprBinary *node = new ASTExprBinary();
-        node->op = "&";
+        node->op = "&&";
         node->type = "bin";
         node->left = visit(ctx->expr6());
         node->right = visit(ctx->expr5());
+
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(and_or_Compatible(node->left->eval_type, node->right->eval_type))
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform && operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+
+
         return (ASTExpr *)node;
     }
 
@@ -430,6 +556,20 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr5());
         node->right = visit(ctx->expr4());
+        
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(node->left->eval_type == node->right->eval_type)
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform == operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+        
+        
         return (ASTExpr *)node;
     }
 
@@ -443,6 +583,20 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr5());
         node->right = visit(ctx->expr4());
+
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(node->left->eval_type == node->right->eval_type)
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform != operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+
+
         return (ASTExpr *)node;
     }
 
@@ -452,6 +606,21 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr4());
         node->right = visit(ctx->expr3());
+
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform >= operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+
+
+
         return (ASTExpr *)node;
     }
 
@@ -461,6 +630,20 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr4());
         node->right = visit(ctx->expr3());
+
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform > operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+
+
         return (ASTExpr *)node;
     }
 
@@ -474,6 +657,21 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr3());
         node->right = visit(ctx->expr2());
+        
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform < operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
+        
+        
+        
         return (ASTExpr *)node;
     }
 
@@ -487,6 +685,18 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "bin";
         node->left = visit(ctx->expr3());
         node->right = visit(ctx->expr2());
+
+        if(node->left->eval_type == "" || node->right->eval_type == ""){
+            // Already handled before.
+        }
+        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
+        {
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Type mismatch. Cannot perform <= operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        }
         return (ASTExpr *)node;
     }
 
@@ -503,6 +713,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
             node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+            if(node->eval_type == "")
+            cout << "Semantic Error: Type mismatch. Cannot perform Subtraction on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
         else{
             node->eval_type = "";
@@ -527,6 +739,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(addCompatible(node->left->eval_type) && addCompatible(node->right->eval_type)){
             node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+            if(node->eval_type == "")
+            cout << "Semantic Error: Type mismatch. Cannot perform Addition on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
         }
         else{
             node->eval_type = "";
@@ -557,6 +771,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(mod_Compatible(node->left->eval_type) && mod_Compatible(node->right->eval_type)){
             node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+            if(node->eval_type == "")
+            cout << "Semantic Error: Type mismatch. Cannot perform modulo on " << node->left->eval_type << " and " << node->right->eval_type << endl;          
         }
         else{
             node->eval_type = "";
@@ -586,6 +802,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
             node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+            if(node->eval_type == "")
+            cout << "Semantic Error: Type mismatch. Cannot perform divide on " << node->left->eval_type << " and " << node->right->eval_type << endl;               
         }
         else{
             node->eval_type = "";
@@ -610,6 +828,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
             node->eval_type = newType(node->left->eval_type, node->right->eval_type);
+            if(node->eval_type == "")
+                cout << "Semantic Error: Type mismatch. Cannot perform multiplication on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
         }
         else{
             node->eval_type = "";
@@ -621,10 +841,18 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitId_expr(MiniCParser::Id_exprContext *ctx) override {
         ASTID* node = new ASTID();
         node = visit(ctx->identifier());
+        
+        int addrs_dim = node->addrs.size();
 
         ASTDtype* dat = look_up_variable(node);
+        int org_dims;
         if(dat != NULL){
             node->eval_type = dat->dtype;
+            org_dims = getDimensions(node);
+            if(org_dims != addrs_dim){
+                cout << "Semantic Error: Dimensions don't match. Expected " << org_dims << " dimensions but got " << addrs_dim << " dimensions\n";
+                node->eval_type = "";
+            }
         }
         else{
             node->eval_type = "";
@@ -637,7 +865,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitCall_expr(MiniCParser::Call_exprContext *ctx) override {
-        return visitChildren(ctx);
+        
+        return visit(ctx->method_call());
     }
 
     virtual antlrcpp::Any visitNot_expr(MiniCParser::Not_exprContext *ctx) override {

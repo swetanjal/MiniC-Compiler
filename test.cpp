@@ -1,14 +1,15 @@
 #include "bits/stdc++.h"
 using namespace std;
 
-int a(int a)
+void a()
 {
-    cout << a << endl;
-    return a;
+    //return 0;
 }
 
 int main()
 {
-    a(3);
+    int main = 8;
+    int c = a();
+    cout << c << endl;
     return 0;
 }
