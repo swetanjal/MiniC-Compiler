@@ -3,7 +3,7 @@ using namespace std;
 float A;
 int a(int b)
 {
-    return "sas";
+    return 3.4;
 }
 
 int main()

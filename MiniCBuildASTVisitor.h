@@ -546,10 +546,23 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitReturn(MiniCParser::ReturnContext *ctx) override {
         ASTReturn *node = new ASTReturn();
-        if(ctx->expr() == NULL && datatype_method != "void"){    
+        int count = 0;
+        if(ctx->expr() != NULL){
+            
+            count++;
+        }
+        if(count == 0 && datatype_method != "void"){    
+            cout << "hello\n";
+            node->expr = NULL;
             cout << "Semantic Error: Invalid returning value. Returning nothing but expected " << datatype_method << endl;            
             return (ASTStat*)node;
         }
+        if(count == 0 && datatype_method == "void")
+        {
+            node->expr = NULL;
+            return (ASTStat*)node;
+        }
+
         node->expr = visit(ctx->expr());
         if(typeMatch(datatype_method, node->expr->eval_type)){
 
@@ -585,6 +598,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
         int addrs_dim = node->id->addrs.size();
         int org_dims = getDimensions(node->id);
+        if(org_dims == -1){
+            return (ASTAssign *) node;
+        }
         if(org_dims != addrs_dim){
             cout << "Semantic Error: Dimensions don't match. Expected " << org_dims << " dimensions but got " << addrs_dim << " dimensions\n";
             

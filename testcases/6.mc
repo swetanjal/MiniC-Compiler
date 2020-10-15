@@ -2,7 +2,7 @@ int A[1000];
 int N;
 void insertionSort()  
 {  
-    int i, key, j;  
+    int i, key, j, n;  
     for (i = 1; i < n; i = i + 1) 
     {  
         key = A[i];  

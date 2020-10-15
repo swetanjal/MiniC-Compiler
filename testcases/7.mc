@@ -4,11 +4,11 @@ int getMax()
 { 
     int mx, i;
     mx = A[0]; 
-    for (i = 1; i < n; i = i + 1)
+    for (i = 1; i < N; i = i + 1)
     {
         if (A[i] > mx)
         {
-            mx = arr[i];
+            mx = A[i];
         }
     }       
     return mx; 
@@ -37,7 +37,7 @@ void countSort(int exp)
         output[count[ (A[i]/exp)%10 ] - 1] = A[i]; 
         count[ (A[i]/exp)%10 ] = count[ (A[i]/exp)%10 ] - 1; 
     } 
-    for (i = 0; i < n; i = i + 1) 
+    for (i = 0; i < N; i = i + 1) 
     {
         A[i] = output[i];
     } 

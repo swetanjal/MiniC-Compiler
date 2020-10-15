@@ -1,5 +1,6 @@
 bool isPrime(int s)
 {
+    int i;
     for(i = 2; i * i <= s; i = i + 1)
     {
         if((s % i) == 0)

@@ -41,7 +41,7 @@ statement: assignment (',' assignment)* ';'    #listAssn
         | BREAK ';'                            #break
         | CONTINUE ';'                         #contiue
         | block                                #blck
-        | RETURN expr? ';'                     #return
+        | RETURN (expr)? ';'                   #return
         | PRINT '(' expr ')' ';'               #print
         | PRINTLN '(' expr ')' ';'             #println
         ;

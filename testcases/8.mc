@@ -2,6 +2,7 @@ int A[1000000];
 
 void sort(int l, int r)
 {
+    int i;
     int sz, mid, tmp[r - l + 1], l_ptr, r_ptr, c;
     sz = r - l + 1;
     if(sz == 1)
@@ -48,6 +49,8 @@ void sort(int l, int r)
 
 int main()
 {
+    int i, N;
+    N = read_int();
     for(i = 0; i < N; i = i + 1){
         A[i] = read_int();
     }
@@ -55,5 +58,5 @@ int main()
     for(i = 0; i < N; i = i + 1){
         print(A[i] + " ");
     }
-    return 0;
+    return 'a';
 }
