@@ -79,6 +79,26 @@ int getDimensions(ASTID* node)
     return -1;
 }
 
+bool foundMethod(string id)
+{
+    SymbolTable *curr = new SymbolTable();
+    curr = curr_table;
+    while(curr != NULL){
+        if(curr->var_decl.find(id) != curr->var_decl.end()){
+            // TO be changed
+            cout << "Semantic Error: "<< id << "() cannot be used as a function." << endl;
+            return false;
+        }
+        else if(curr->method_decl.find(id) != curr->method_decl.end()){
+            return true;
+        }
+        
+        curr = curr->prev;
+    }
+    cout << "Semantic Error: Method " << id <<  "() being called before declaration\n";
+    return false;
+}
+
 ASTDtype* look_up_method(string id)
 {
     SymbolTable *curr = new SymbolTable();
@@ -99,6 +119,32 @@ ASTDtype* look_up_method(string id)
     return NULL;
 }
 
+vector <ASTDtype*> getArgTypes(string id){
+    SymbolTable *curr = new SymbolTable();
+    curr = curr_table;
+
+    vector <ASTDtype*> dummy;
+    while(curr != NULL){
+        if(curr->var_decl.find(id) != curr->var_decl.end()){
+            // TO be changed
+            cout << "Semantic Error: "<< id << "() cannot be used as a function." << endl;
+            return dummy;
+        }
+        else if(curr->method_decl.find(id) != curr->method_decl.end()){
+            ASTMethodDecl* tmp = curr->method_decl[id];
+            vector <ASTDtype* > vec;
+            for(auto el: tmp->args)
+            {
+                vec.push_back(el->dat);
+            }
+            return vec;
+        }
+        
+        curr = curr->prev;
+    }
+    cout << "Semantic Error: Method " << id <<  "() being called before declaration\n";
+    return dummy;
+}
 
 bool typeMatch(string a, string b)
 {
@@ -106,14 +152,25 @@ bool typeMatch(string a, string b)
         return true;
     if(a == "float" && b == "int")
         return true;
-    
+    if(b == "float" && a == "int")
+        return true;
     if(a == "string" && b == "char")
         return true;
 
     if(a == "int" && b == "char")
         return true;
-    
+    if(a == "char" && b == "int")
+        return true;
+
+    if(b == "int" && a == "bool")
+        return true;
+
     if(a == "int" && b == "bool")
+        return true;
+    
+    if(a == "float" && b == "char")
+        return true;
+    if(b == "float" && a == "char")
         return true;
     return false;
 }
@@ -462,14 +519,51 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitMethod_call(MiniCParser::Method_callContext *ctx) override {
         ASTExprCall* node = new ASTExprCall();
-        ASTDtype* dat = look_up_method(ctx->ID()->getText());
+        bool found = foundMethod(ctx->ID()->getText());
         
-        if(dat == NULL){
+        
+        if(found == false){
             // Issue
-            node->eval_type = "void";
+            node->eval_type = "";
         }
         else{
-            node->eval_type = dat->dtype;
+            ASTDtype* dat = look_up_method(ctx->ID()->getText());
+            if(dat == NULL)
+                node->eval_type = "void";
+            else
+                node->eval_type = dat->dtype;
+            vector <ASTDtype*> vec = getArgTypes(ctx->ID()->getText());
+            
+            vector <ASTExpr*> express;
+            int c = 0;
+            while(ctx->expr(c) != NULL)
+            {
+                express.push_back(visit(ctx->expr(c)));
+                c++;
+            }
+            
+            if(express.size() != vec.size()){
+                cout << "Semantic Error: Number of arguments do not match definition of " << ctx->ID()->getText() << "()\n";
+                node->eval_type = "";
+            }
+            else{
+                int ok = 1;
+                int cnt = 0;
+                for(auto arg: vec)
+                {
+                    if(typeMatch(arg->dtype, express[cnt++]->eval_type)){
+
+                    }
+                    else{
+                        ok = 0;
+                    }
+                }
+                if(ok == 0){
+                    cout << "Semantic Error: Type of arguments do not match definition of " << ctx->ID()->getText() << "()\n";
+                    node->eval_type = "";
+                }
+            }
+            
         }
         return (ASTExpr*)node;
     }

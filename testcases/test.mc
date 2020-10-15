@@ -1,7 +1,12 @@
-int A;
+float A;
+
+void a(int a)
+{
+    
+}
 
 int main()
 {
-    bool c;
-    A = 3 + 6 * 7 + c;
+    char c;
+    c = a(2.3);
 }

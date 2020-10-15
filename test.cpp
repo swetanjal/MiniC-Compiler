@@ -1,15 +1,13 @@
 #include "bits/stdc++.h"
 using namespace std;
 
-void a()
+int a(int b)
 {
-    //return 0;
+    return 0;
 }
 
 int main()
 {
-    int main = 8;
-    int c = a();
-    cout << c << endl;
+    char c = a(2.3);
     return 0;
 }
