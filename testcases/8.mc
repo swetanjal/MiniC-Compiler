@@ -58,5 +58,5 @@ int main()
     for(i = 0; i < N; i = i + 1){
         print(A[i] + " ");
     }
-    return 'a';
+    return 0;
 }

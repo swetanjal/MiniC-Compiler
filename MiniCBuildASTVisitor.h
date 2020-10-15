@@ -567,7 +567,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         if(typeMatch(datatype_method, node->expr->eval_type)){
 
         }
-        else{
+        else if(node->expr->eval_type != ""){
             cout << "Semantic Error: Return Type Mismatch. Invalid Conversion from " << node->expr->eval_type << " to " << datatype_method << endl;
         }
         return (ASTStat*)node;
