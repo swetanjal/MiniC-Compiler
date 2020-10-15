@@ -1,13 +1,16 @@
 #include "bits/stdc++.h"
 using namespace std;
-
+float A;
 int a(int b)
 {
-    return 0;
+    return "sas";
 }
 
 int main()
 {
-    char c = a(2.3);
+    int i, j, k;
+    for(i = 0;1+1,3+3;k = k + 1){
+
+    }
     return 0;
 }

@@ -1,12 +1,22 @@
-float A;
-
-void a(int a)
-{
-    
-}
-
 int main()
 {
-    char c;
-    c = a(2.3);
+    int i;
+    for(i = 0; i < 5,i < 10; i = i + 1)
+    {
+        for(i = 0; i < 5; i = i + 1)
+        {
+            continue;
+            break;
+        }
+        continue;
+        break;
+        print(i);
+    }
+    while(true)
+    {
+        break;
+        continue;
+    }
+    return ;
+    return ;
 }

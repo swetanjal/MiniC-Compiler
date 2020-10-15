@@ -4,6 +4,10 @@
 #include "symboltable.h"
 using namespace std;
 
+bool insideMethod = false;
+string datatype_method = "";
+int insideLoop = 0;
+
 void add(ASTVarDecl* node)
 {
     if(curr_table->method_decl.find(node->id->name) != curr_table->method_decl.end() || curr_table->var_decl.find(node->id->name) != curr_table->var_decl.end()){
@@ -172,6 +176,12 @@ bool typeMatch(string a, string b)
         return true;
     if(b == "float" && a == "char")
         return true;
+
+    if(a == "string" && b == "int")
+        return true;
+    if(a == "string" && b == "bool")
+        return true;
+
     return false;
 }
 
@@ -201,6 +211,22 @@ string newType(string a, string b)
         return "int";
     if(b == "int" && a == "bool")
         return "int";
+
+    if(b == "float" && a == "char")
+        return "float";
+    if(a == "float" && b == "char")
+        return "float";
+
+    if(a == "string" && b == "int")
+        return "string";
+    if(b == "string" && a == "int")
+        return "string";
+
+    if(a == "string" && b == "bool")
+        return "string";
+    if(b == "string" && a == "bool")
+        return "string";
+    
     if(a == b)
         return a;
     return "";
@@ -337,8 +363,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->args.push_back(node_tmp);
             c++;
         }
-        
+        datatype_method = node->return_type->dtype;
         node->block = visit(context->block());
+        datatype_method = "";
         vec.push_back(node);
         parent_table();
         return vec;
@@ -352,6 +379,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node -> type = "meth";
         node->return_type = NULL;
         node->name = context->ID()->getText();
+
+        
 
         int c = 0;
 
@@ -370,7 +399,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->args.push_back(node_tmp);
             c++;
         }
+        datatype_method = "void";
         node->block = visit(context->block());
+        datatype_method = "";
         vec.push_back(node);
         parent_table();
         return vec;
@@ -456,23 +487,57 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitIf(MiniCParser::IfContext *ctx) override {
-        return visitChildren(ctx);
+        ASTIFStat *node = new ASTIFStat();
+        node->expr = visit(ctx->expr());
+        node->if_block = visit(ctx->block(0));
+        node->else_block = NULL;
+        if(ctx->block(1) != NULL)
+            node->else_block = visit(ctx->block(1));
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitFor(MiniCParser::ForContext *ctx) override {
-        return visitChildren(ctx);
+        ASTFor *node = new ASTFor();
+        int c = 0;
+        while(ctx->expr(c) != NULL){
+            node->exprs.push_back(visit(ctx->expr(c)));
+            c++;
+        }
+        
+        c = 0;
+        while(ctx->expr(c) != NULL){
+            node->assigns.push_back(visit(ctx->assignment(c)));
+            c++;
+        }
+        insideLoop++;
+        node->block = visit(ctx->block());
+        insideLoop--;
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitWhile(MiniCParser::WhileContext *ctx) override {
-        return visitChildren(ctx);
+        ASTWhile *node = new ASTWhile();
+        node->expr = visit(ctx->expr());
+        insideLoop++;
+        node->block = visit(ctx->block());
+        insideLoop--;
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitBreak(MiniCParser::BreakContext *ctx) override {
-        return visitChildren(ctx);
+        ASTBreak *node = new ASTBreak();
+        if(insideLoop == 0){
+            cout << "Semantic Error: Encountered break statement outside Loop block.\n";
+        }
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitContiue(MiniCParser::ContiueContext *ctx) override {
-        return visitChildren(ctx);
+        ASTContinue *node = new ASTContinue();
+        if(insideLoop == 0){
+            cout << "Semantic Error: Encountered continue statement outside Loop block.\n";
+        }
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitBlck(MiniCParser::BlckContext *ctx) override {
@@ -480,15 +545,31 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitReturn(MiniCParser::ReturnContext *ctx) override {
-        return visitChildren(ctx);
+        ASTReturn *node = new ASTReturn();
+        if(ctx->expr() == NULL && datatype_method != "void"){    
+            cout << "Semantic Error: Invalid returning value. Returning nothing but expected " << datatype_method << endl;            
+            return (ASTStat*)node;
+        }
+        node->expr = visit(ctx->expr());
+        if(typeMatch(datatype_method, node->expr->eval_type)){
+
+        }
+        else{
+            cout << "Semantic Error: Return Type Mismatch. Invalid Conversion from " << node->expr->eval_type << " to " << datatype_method << endl;
+        }
+        return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitPrint(MiniCParser::PrintContext *ctx) override {
-        return visitChildren(ctx);
+        ASTPrint *node = new ASTPrint();
+        node->expr = visit(ctx->expr());
+        return (ASTStat*) node;
     }
 
     virtual antlrcpp::Any visitPrintln(MiniCParser::PrintlnContext *ctx) override {
-        return visitChildren(ctx);
+        ASTPrintln *node = new ASTPrintln();
+        node->expr = visit(ctx->expr());
+        return (ASTStat*) node;
     }
 
     virtual antlrcpp::Any visitAssignment(MiniCParser::AssignmentContext *ctx) override {
@@ -964,27 +1045,51 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitNot_expr(MiniCParser::Not_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTNot *node = new ASTNot;
+        node->expr = visit(ctx->expr());
+        if(node->expr->eval_type == "bool"){
+            node->eval_type = "bool";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Cannot apply Not operator on " << node->expr->eval_type << endl;;
+        }
+        return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitNegate_expr(MiniCParser::Negate_exprContext *ctx) override {
-        return visitChildren(ctx);
+        ASTNeg *node = new ASTNeg;
+        node->expr = visit(ctx->expr());
+        if(node->expr->eval_type == "int"){
+            node->eval_type = "int";
+        }
+        else{
+            node->eval_type = "";
+            cout << "Semantic Error: Cannot apply Negate operator on " << node->expr->eval_type << endl;;
+        }
+        return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitBracket_expr(MiniCParser::Bracket_exprContext *ctx) override {
-        return visitChildren(ctx);
+        return visit(ctx->expr());
     }
 
     virtual antlrcpp::Any visitInp_int(MiniCParser::Inp_intContext *ctx) override {
-        return visitChildren(ctx);
+        Inp *node = new Inp();
+        node->eval_type = "int";
+        return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitInp_char(MiniCParser::Inp_charContext *ctx) override {
-        return visitChildren(ctx);
+        Inp *node = new Inp();
+        node->eval_type = "char";
+        return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitInp_bool(MiniCParser::Inp_boolContext *ctx) override {
-        return visitChildren(ctx);
+        Inp *node = new Inp();
+        node->eval_type = "bool";
+        return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitVar(MiniCParser::VarContext *ctx) override {

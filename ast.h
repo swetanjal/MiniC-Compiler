@@ -20,6 +20,17 @@ class ASTBOOLLIT;
 class ASTCHARLIT;
 class ASTExprCall;
 class ASTStatCall;
+class ASTIFStat;
+class ASTNot;
+class ASTNeg;
+class Inp;
+class ASTPrint;
+class ASTPrintln;
+class ASTFor;
+class ASTWhile;
+class ASTBreak;
+class ASTContinue;
+class ASTReturn;
 class ASTvisitor
 {
 public:
@@ -42,6 +53,17 @@ public:
     virtual void visit(ASTSTRINGLIT &node) = 0;
     virtual void visit(ASTBOOLLIT &node) = 0;
     virtual void visit(ASTExprCall &node) = 0;
+    virtual void visit(ASTIFStat &node) = 0;
+    virtual void visit(ASTNot &node) = 0;
+    virtual void visit(ASTNeg &node) = 0;
+    virtual void visit(Inp &node) = 0;
+    virtual void visit(ASTPrint &node) = 0;
+    virtual void visit(ASTPrintln &node) = 0;
+    virtual void visit(ASTFor &node) = 0;
+    virtual void visit(ASTBreak &node) = 0;
+    virtual void visit(ASTContinue &node) = 0;
+    virtual void visit(ASTWhile &node) = 0;
+    virtual void visit(ASTReturn &node) = 0;
 };
 
 class ASTnode
@@ -98,6 +120,51 @@ class ASTStat : public ASTnode
     virtual void accept(ASTvisitor &V) = 0;
 };
 
+class ASTWhile : public ASTStat
+{
+    public:
+    ASTExpr* expr;
+    ASTBlock* block;
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTReturn : public ASTStat
+{
+    public:
+    ASTExpr* expr;
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTBreak : public ASTStat
+{
+    public:
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTContinue: public ASTStat
+{
+    public:
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTFor : public ASTStat
+{
+    public:
+    vector <ASTAssign*> assigns;
+    vector <ASTExpr*> exprs;
+    ASTBlock* block;
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
 class ASTStatAssn : public ASTStat
 {
     public:
@@ -114,6 +181,62 @@ class ASTStatCall : public ASTStat
     }
 };
 
+class ASTIFStat : public ASTStat
+{
+    public:
+    ASTExpr* expr;
+    ASTBlock* if_block;
+    ASTBlock* else_block;
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTPrint : public ASTStat
+{
+    public:
+    ASTExpr* expr;
+    virtual void accept(ASTvisitor &V)
+    {
+        V.visit(*this);
+    }
+};
+
+class ASTPrintln : public ASTStat
+{
+    public:
+    ASTExpr* expr;
+    virtual void accept(ASTvisitor &V)
+    {
+        V.visit(*this);
+    }
+};
+
+class ASTNot : public ASTExpr
+{
+    public:
+    ASTExpr* expr;
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTNeg : public ASTExpr
+{
+    public:
+    ASTExpr* expr;
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class Inp : public ASTExpr
+{
+    public:
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
 
 class ASTVarDecl : public ASTDecl
 {
