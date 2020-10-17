@@ -69,6 +69,8 @@ public:
 
     virtual antlrcpp::Any visitPrintln(MiniCParser::PrintlnContext *context) = 0;
 
+    virtual antlrcpp::Any visitAssignmentbeg(MiniCParser::AssignmentbegContext *context) = 0;
+
     virtual antlrcpp::Any visitAssignment(MiniCParser::AssignmentContext *context) = 0;
 
     virtual antlrcpp::Any visitMethod_call(MiniCParser::Method_callContext *context) = 0;

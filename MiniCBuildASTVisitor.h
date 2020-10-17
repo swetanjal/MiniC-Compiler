@@ -243,7 +243,7 @@ string modCompatible(string a)
     return "";
 }
 
-bool logicalCompatible(string a)
+string logicalCompatible(string a)
 {
     if(a == "")
         return "";
@@ -253,7 +253,7 @@ bool logicalCompatible(string a)
         return "bool";
     
     if(a == "char")
-        return "";
+        return "bool";
     if(a == "string")
         return "bool";
     if(a == "uint")
@@ -263,7 +263,7 @@ bool logicalCompatible(string a)
     return "";
 }
 
-bool relationalCompatible(string a)
+string relationalCompatible(string a)
 {
     if(a == "")
         return "";
@@ -539,6 +539,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitListAssn(MiniCParser::ListAssnContext *ctx) override {
         ASTStatAssn *node = new ASTStatAssn();
+        node->type = "assn_lst";
         int c = 0;
         while(ctx->assignment(c) != NULL){
             node->assignments.push_back(visit(ctx->assignment(c)));
@@ -550,11 +551,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitMethodCall(MiniCParser::MethodCallContext *ctx) override {
         auto tmp = visit(ctx->method_call());
         ASTStatCall *node = new ASTStatCall();
+        node->type = "stat_call";
+        node->expr = tmp;
         return (ASTStat*)node;
     }
 
     virtual antlrcpp::Any visitIf(MiniCParser::IfContext *ctx) override {
         ASTIFStat *node = new ASTIFStat();
+        node->type = "if";
         node->expr = visit(ctx->expr());
         node->if_block = visit(ctx->block(0));
         node->else_block = NULL;
@@ -565,6 +569,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitFor(MiniCParser::ForContext *ctx) override {
         ASTFor *node = new ASTFor();
+        node->type = "for";
         int c = 0;
         while(ctx->expr(c) != NULL){
             node->exprs.push_back(visit(ctx->expr(c)));
@@ -572,7 +577,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         
         c = 0;
-        while(ctx->expr(c) != NULL){
+        while(ctx->assignmentbeg(c) != NULL){
+            node->beg_assigns.push_back(visit(ctx->assignmentbeg(c)));
+            c++;
+        }
+
+        c = 0;
+        while(ctx->assignment(c) != NULL){
             node->assigns.push_back(visit(ctx->assignment(c)));
             c++;
         }
@@ -582,8 +593,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         return (ASTStat*)node;
     }
 
+    virtual antlrcpp::Any visitAssignmentbeg(MiniCParser::AssignmentbegContext *context)
+    {
+        return visit(context->assignment());
+    };
+
     virtual antlrcpp::Any visitWhile(MiniCParser::WhileContext *ctx) override {
         ASTWhile *node = new ASTWhile();
+        node->type = "while";
         node->expr = visit(ctx->expr());
         insideLoop++;
         node->block = visit(ctx->block());
@@ -593,6 +610,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitBreak(MiniCParser::BreakContext *ctx) override {
         ASTBreak *node = new ASTBreak();
+        node->type = "break";
         if(insideLoop == 0){
             cout << "Semantic Error: Encountered break statement outside Loop block.\n";
         }
@@ -601,6 +619,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitContiue(MiniCParser::ContiueContext *ctx) override {
         ASTContinue *node = new ASTContinue();
+        node->type = "continue";
         if(insideLoop == 0){
             cout << "Semantic Error: Encountered continue statement outside Loop block.\n";
         }
@@ -613,6 +632,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitReturn(MiniCParser::ReturnContext *ctx) override {
         ASTReturn *node = new ASTReturn();
+        node->type = "return";
         int count = 0;
         if(ctx->expr() != NULL){
             
@@ -643,12 +663,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitPrint(MiniCParser::PrintContext *ctx) override {
         ASTPrint *node = new ASTPrint();
         node->expr = visit(ctx->expr());
+        node->type = "print";
         return (ASTStat*) node;
     }
 
     virtual antlrcpp::Any visitPrintln(MiniCParser::PrintlnContext *ctx) override {
         ASTPrintln *node = new ASTPrintln();
         node->expr = visit(ctx->expr());
+        node->type = "println";
         return (ASTStat*) node;
     }
 
@@ -684,8 +706,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitMethod_call(MiniCParser::Method_callContext *ctx) override {
         ASTExprCall* node = new ASTExprCall();
         bool found = foundMethod(ctx->ID()->getText());
-        
-        
+        node->type = "call";
+        node->name = ctx->ID()->getText();
+        vector <ASTExpr*> dummy;
+        node->args = dummy;
         if(found == false){
             // Issue
             node->eval_type = "";
@@ -729,7 +753,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
                     node->eval_type = "";
                 }
             }
-            
+            node->args = express;
         }
         return (ASTExpr*)node;
     }
@@ -769,7 +793,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr7());
         node->right = visit(ctx->expr6());
         
+        // cout << logicalCompatible(getCastedType(node->left->eval_type, node->right->eval_type)) << endl;
         node->eval_type = logicalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        // cout << node->eval_type << endl;
         if(node->left->eval_type == "" || node->right->eval_type == "")
         {
             // Already handled before.
@@ -1122,6 +1148,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitCast(MiniCParser::CastContext *ctx) override {
         ASTCast* node = new ASTCast();
+        node->type = "cast";
         node->expr = visit(ctx->expr());
         node->dat = visit(ctx->type());
         if(!possibleToCast(node->expr->eval_type, node->dat->dtype))
@@ -1138,6 +1165,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitVar(MiniCParser::VarContext *ctx) override {
         ASTID* node = new ASTID();
+        node->type = "id";
         node->name = ctx->ID()->getText();
         return (ASTID*)node;
     }
@@ -1148,6 +1176,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         */ 
         ASTID* node = new ASTID();
         node->name = ctx->ID()->getText();
+        node->type = "id";
         int c = 0;
         while(ctx->expr(c) != NULL){
             node->addrs.push_back(visit(ctx->expr(c)));
@@ -1181,7 +1210,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         ASTCHARLIT *node = new ASTCHARLIT();
         node->type = "char_lit";
         node->eval_type = "char";
-        node->value = (ctx->CHAR_LIT()->getText())[0];
+        node->value = (ctx->CHAR_LIT()->getText());
         return (ASTExpr *)node;
     }
 

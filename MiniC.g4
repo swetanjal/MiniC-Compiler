@@ -36,7 +36,7 @@ type: INT     #typeInt
 statement: assignment (',' assignment)* ';'    #listAssn 
         | method_call ';'                      #methodCall
         | IF '(' expr ')' block (ELSE block)?  #if
-        | FOR '(' (assignment (',' assignment)* )? ';' (expr (',' expr)*)? ';' (assignment (',' assignment)*)? ')' block #for
+        | FOR '(' (assignmentbeg (',' assignmentbeg)* )? ';' (expr (',' expr)*)? ';' (assignment (',' assignment)*)? ')' block #for
         | WHILE '(' expr ')' block             #while
         | BREAK ';'                            #break
         | CONTINUE ';'                         #contiue
@@ -45,6 +45,8 @@ statement: assignment (',' assignment)* ';'    #listAssn
         | PRINT '(' expr ')' ';'               #print
         | PRINTLN '(' expr ')' ';'             #println
         ;
+
+assignmentbeg: assignment;
 
 // Rule 8
 assignment: identifier ASSIGN expr;

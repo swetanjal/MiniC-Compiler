@@ -6,7 +6,7 @@
 
 #include "MiniCBuildASTVisitor.h"
 
-// #include "PostfixVisitor.h"
+#include "PrettyPrint.h"
 //#include "ast.h"
 
 using namespace std;
@@ -28,9 +28,8 @@ int main(int argc, const char* argv[]) {
     MiniCVisitor *visitor = new MiniCBuildASTVisitor();
 
     ASTProg *program_root = visitor->visitProgram(ctx);
-    
-    /*PostFixVisitor *pv = new PostFixVisitor();
+    cout << "********** Pretty Printing the program **********\n";    
+    PrettyPrint *pv = new PrettyPrint();
     pv->visit(*program_root);
-    */
     return 0;
 }

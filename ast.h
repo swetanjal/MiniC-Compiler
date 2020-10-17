@@ -32,6 +32,7 @@ class ASTBreak;
 class ASTContinue;
 class ASTReturn;
 class ASTCast;
+class ASTStatAssn;
 class ASTvisitor
 {
 public:
@@ -66,6 +67,7 @@ public:
     virtual void visit(ASTWhile &node) = 0;
     virtual void visit(ASTReturn &node) = 0;
     virtual void visit(ASTCast &node) = 0;
+    virtual void visit(ASTStatAssn &node) = 0;
 };
 
 class ASTnode
@@ -170,6 +172,7 @@ class ASTContinue: public ASTStat
 class ASTFor : public ASTStat
 {
     public:
+    vector <ASTAssign*> beg_assigns;
     vector <ASTAssign*> assigns;
     vector <ASTExpr*> exprs;
     ASTBlock* block;
@@ -188,6 +191,7 @@ class ASTStatAssn : public ASTStat
 class ASTStatCall : public ASTStat
 {
     public:
+    ASTExpr* expr;
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
@@ -310,7 +314,7 @@ class ASTFLOATLIT : public ASTExpr{
 
 class ASTCHARLIT : public ASTExpr{
     public:
-    char value;
+    string value;
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
@@ -326,7 +330,7 @@ class ASTSTRINGLIT : public ASTExpr{
 
 class ASTBOOLLIT : public ASTExpr{
     public:
-    bool value;
+    string value;
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
@@ -346,6 +350,8 @@ class ASTAssign : public ASTnode
 class ASTExprCall : public ASTExpr
 {
     public:
+    vector <ASTExpr*> args;
+    string name;
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }

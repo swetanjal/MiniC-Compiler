@@ -115,6 +115,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual antlrcpp::Any visitAssignmentbeg(MiniCParser::AssignmentbegContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual antlrcpp::Any visitAssignment(MiniCParser::AssignmentContext *ctx) override {
     return visitChildren(ctx);
   }

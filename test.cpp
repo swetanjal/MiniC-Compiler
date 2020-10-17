@@ -13,5 +13,6 @@ int main()
     string d;
     float e;
     char llol = true;    
+    cout << (3 % 'a') << endl;
     // return 3.3;
 }

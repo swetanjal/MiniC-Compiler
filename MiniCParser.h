@@ -25,10 +25,11 @@ public:
 
   enum {
     RuleProgram = 0, RuleDecl = 1, RuleVar_decl = 2, RuleMethod_decl = 3, 
-    RuleBlock = 4, RuleType = 5, RuleStatement = 6, RuleAssignment = 7, 
-    RuleMethod_call = 8, RuleExpr = 9, RuleExpr8 = 10, RuleExpr7 = 11, RuleExpr6 = 12, 
-    RuleExpr5 = 13, RuleExpr4 = 14, RuleExpr3 = 15, RuleExpr2 = 16, RuleExpr1 = 17, 
-    RuleExpr0 = 18, RuleIdentifier = 19, RuleLiteral = 20, RuleBool_lit = 21
+    RuleBlock = 4, RuleType = 5, RuleStatement = 6, RuleAssignmentbeg = 7, 
+    RuleAssignment = 8, RuleMethod_call = 9, RuleExpr = 10, RuleExpr8 = 11, 
+    RuleExpr7 = 12, RuleExpr6 = 13, RuleExpr5 = 14, RuleExpr4 = 15, RuleExpr3 = 16, 
+    RuleExpr2 = 17, RuleExpr1 = 18, RuleExpr0 = 19, RuleIdentifier = 20, 
+    RuleLiteral = 21, RuleBool_lit = 22
   };
 
   MiniCParser(antlr4::TokenStream *input);
@@ -48,6 +49,7 @@ public:
   class BlockContext;
   class TypeContext;
   class StatementContext;
+  class AssignmentbegContext;
   class AssignmentContext;
   class Method_callContext;
   class ExprContext;
@@ -332,10 +334,12 @@ public:
 
     antlr4::tree::TerminalNode *FOR();
     BlockContext *block();
-    std::vector<AssignmentContext *> assignment();
-    AssignmentContext* assignment(size_t i);
+    std::vector<AssignmentbegContext *> assignmentbeg();
+    AssignmentbegContext* assignmentbeg(size_t i);
     std::vector<ExprContext *> expr();
     ExprContext* expr(size_t i);
+    std::vector<AssignmentContext *> assignment();
+    AssignmentContext* assignment(size_t i);
 
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
@@ -393,6 +397,19 @@ public:
   };
 
   StatementContext* statement();
+
+  class  AssignmentbegContext : public antlr4::ParserRuleContext {
+  public:
+    AssignmentbegContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    AssignmentContext *assignment();
+
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  AssignmentbegContext* assignmentbeg();
 
   class  AssignmentContext : public antlr4::ParserRuleContext {
   public:
