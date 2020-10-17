@@ -342,6 +342,10 @@ bool canBeAssigned(string a, string b)
 
     if(a == "float")
         return true;
+    if(a == "string" && b == "string")
+        return true;
+    if(a == "file" && b == "file")
+        return true;
     return false;
 }
 
@@ -356,54 +360,6 @@ bool possibleToCast(string a, string b)
     if(exp == 6 && got != 6)
         return false;
     return true;
-    if(a == "bool" && b == "bool")
-        return true;
-    if(a == "bool" && b == "char")
-        return false;
-    if(a == "bool" && b == "uint")
-        return false;
-    if(a == "bool" && b == "int")
-        return false;
-    if(a == "bool" && b == "float")
-        return false;
-
-    if(a == "char" && b == "bool")
-        return true;
-    if(a == "char" && b == "char")
-        return true;
-    if(a == "char" && b == "uint")
-        return false;
-    if(a == "char" && b == "int")
-        return false;
-    if(a == "char" && b == "float")
-        return false;
-    
-    if(a == "uint" && b == "bool")
-        return true;
-    if(a == "uint" && b == "char")
-        return true;
-    if(a == "uint" && b == "uint")
-        return true;
-    if(a == "uint" && b == "int")
-        return false;
-    if(a == "uint" && b == "float")
-        return false;
-
-
-    if(a == "int" && b == "bool")
-        return true;
-    if(a == "int" && b == "char")
-        return true;
-    if(a == "int" && b == "uint")
-        return true;
-    if(a == "int" && b == "int")
-        return true;
-    if(a == "int" && b == "float")
-        return false;
-
-    if(a == "float")
-        return true;
-    return false;
 }
 
 class MiniCBuildASTVisitor : public MiniCVisitor
