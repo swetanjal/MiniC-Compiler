@@ -647,7 +647,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         if(count == 0 && datatype_method != "void"){    
             //cout << "hello\n";
             node->expr = NULL;
-            cout << "Semantic Error on line << " << line << ": Invalid returning value. Returning nothing but expected " << datatype_method << endl;            
+            cout << "Semantic Error on line " << line << ": Invalid returning value. Returning nothing but expected " << datatype_method << endl;            
             return (ASTStat*)node;
         }
         if(count == 0 && datatype_method == "void")
