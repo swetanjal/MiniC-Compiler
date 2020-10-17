@@ -137,6 +137,8 @@ public:
 
     virtual antlrcpp::Any visitInp_bool(MiniCParser::Inp_boolContext *context) = 0;
 
+    virtual antlrcpp::Any visitCast(MiniCParser::CastContext *context) = 0;
+
     virtual antlrcpp::Any visitVar(MiniCParser::VarContext *context) = 0;
 
     virtual antlrcpp::Any visitVar_array(MiniCParser::Var_arrayContext *context) = 0;

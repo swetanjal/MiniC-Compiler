@@ -4,6 +4,7 @@ string A[1000000];
 
 void sort(int l, int r)
 {
+    int i;
     int sz, mid, tmp[r - l + 1], l_ptr, r_ptr, c;
     sz = r - l + 1;
     if(sz == 1)

@@ -28,10 +28,16 @@ int main()
     for(i = 0; i < 26; i = i + 1)
     {
         char t;
-        t = 65 + i;
-        println("Number of " + t + "s is " + caps[i]);
-        t = 97 + i;
-        println("Number of " + t + "s is " + small[i]);
+        t = (char)(65 + i);
+        print("Number of ");
+        print(t);
+        print("s is ");
+        println(caps[i]);
+        t = (char)(97 + i);
+        print("Number of ");
+        print(t);
+        print("s is ");
+        println(small[i]);
     }
     return 0;
 }

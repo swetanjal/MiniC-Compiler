@@ -95,6 +95,7 @@ expr0: identifier                        #id_expr
     | READ_INT'(' ')'                    #inp_int
     | READ_CHAR'(' ')'                   #inp_char
     | READ_BOOL'(' ')'                   #inp_bool
+    | '(' type ')' expr                  #cast
     ;               
 
 // Rule 11

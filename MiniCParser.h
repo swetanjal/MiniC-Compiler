@@ -816,6 +816,16 @@ public:
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
 
+  class  CastContext : public Expr0Context {
+  public:
+    CastContext(Expr0Context *ctx);
+
+    TypeContext *type();
+    ExprContext *expr();
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
   class  Id_exprContext : public Expr0Context {
   public:
     Id_exprContext(Expr0Context *ctx);

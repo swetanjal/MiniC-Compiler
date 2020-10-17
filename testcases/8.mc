@@ -56,7 +56,8 @@ int main()
     }
     sort(0, N - 1);    
     for(i = 0; i < N; i = i + 1){
-        print(A[i] + " ");
+        print(A[i]);
+        print(" ");
     }
     return 0;
 }

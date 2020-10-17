@@ -251,6 +251,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual antlrcpp::Any visitCast(MiniCParser::CastContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual antlrcpp::Any visitVar(MiniCParser::VarContext *ctx) override {
     return visitChildren(ctx);
   }

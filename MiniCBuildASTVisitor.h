@@ -83,6 +83,9 @@ int getDimensions(ASTID* node)
     return -1;
 }
 
+
+
+
 bool foundMethod(string id)
 {
     SymbolTable *curr = new SymbolTable();
@@ -150,147 +153,255 @@ vector <ASTDtype*> getArgTypes(string id){
     return dummy;
 }
 
-bool typeMatch(string a, string b)
+int getKey(string x)
 {
-    if(a == b)
-        return true;
-    if(a == "float" && b == "int")
-        return true;
-    if(b == "float" && a == "int")
-        return true;
-    if(a == "string" && b == "char")
-        return true;
-
-    if(a == "int" && b == "char")
-        return true;
-    if(a == "char" && b == "int")
-        return true;
-
-    if(b == "int" && a == "bool")
-        return true;
-
-    if(a == "int" && b == "bool")
-        return true;
-    
-    if(a == "float" && b == "char")
-        return true;
-    if(b == "float" && a == "char")
-        return true;
-
-    if(a == "string" && b == "int")
-        return true;
-    if(a == "string" && b == "bool")
-        return true;
-
-    return false;
+    if(x == "bool")
+        return 0;
+    if(x == "char")
+        return 1;
+    if(x == "unint")
+        return 2;
+    if(x == "int")
+        return 3;
+    if(x == "float")
+        return 4;
+    if(x == "string")
+        return 5;
+    if(x == "file")
+        return 6;
+    return -1;
 }
 
-string newType(string a, string b)
+string getTypeString(int v)
 {
-    if(a == "int" && b == "float"){
-        return "float";
-    }
-    if(a == "float" && b == "int"){
-        return "float";
-    }
-
-    if(a == "string" && b == "char"){
-        return "string";
-    }
-
-    if(b == "string" && a == "char"){
-        return "string";
-    }
-
-    if(a == "int" && b == "char")
+    if(v == 0)
+        return "bool";
+    if(v == 1)
+        return "char";
+    if(v == 2)
+        return "uint";
+    if(v == 3)
         return "int";
-    if(b == "int" && a == "char")
-        return "int";
-    
-    if(a == "int" && b == "bool")
-        return "int";
-    if(b == "int" && a == "bool")
-        return "int";
-
-    if(b == "float" && a == "char")
+    if(v == 4)
         return "float";
-    if(a == "float" && b == "char")
-        return "float";
-
-    if(a == "string" && b == "int")
+    if(v == 5)
         return "string";
-    if(b == "string" && a == "int")
-        return "string";
-
-    if(a == "string" && b == "bool")
-        return "string";
-    if(b == "string" && a == "bool")
-        return "string";
-    
-    if(a == b)
-        return a;
+    if(v == 6)
+        return "file";
     return "";
 }
 
-bool addCompatible(string a)
+string getCastedType(string a, string b)
+{
+    int x = getKey(a);
+    int y = getKey(b);
+
+    int t1 = min(x, y);
+    int t2 = max(x, y);
+    if(t1 == -1)
+        return "";
+    //if(t1 == 1 && t2 == 5)
+    //    return getTypeString(t2);
+    if(t2 == 5)
+        return getTypeString(t2);
+
+    if((t1 == 5 || t2 == 5 || t1 == 6 || t2 == 6) && (t1 != t2))
+        return "";
+
+    return getTypeString(t2); 
+
+    //if(a == "bool" && b == "int")
+    //    return "int";
+    //if(a == "bool" && b == "float")
+    //    return "float";
+    //if(a == "bool" && )
+}
+
+string addSubMulDivCompatible(string a)
 {
     if(a == "int")
-        return true;
+        return "int";
     if(a == "float")
-        return true;
+        return "float";
     if(a == "string")
-        return true;
+        return "";
     if(a == "char")
-        return true;
-    return false;
-}
-
-bool sub_mul_div_Compatible(string a)
-{
-    if(a == "int")
-        return true;
-    if(a == "float")
-        return true;
-    return false;
-}
-
-bool mod_Compatible(string a)
-{
-    if(a == "int")
-        return true;
-    return false;
-}
-
-bool and_or_Compatible(string a)
-{
-    if(a == "int")
-        return true;
+        return "int";
+    if(a == "unit")
+        return "int";
     if(a == "bool")
-        return true;
-    return false;
+        return "int";
+    if(a == "file")
+        return "";
+    return "";
 }
 
-bool logical_Compatible(string a, string b)
+string modCompatible(string a)
 {
-    if(a == b)
-        return true;
-    if(a == "int" && b == "float")
-        return true;
-    if(b == "int" && a == "float")
-        return true;
-    return false;
+    if(a == "int")
+        return "int";
+    return "";
 }
 
-bool and_or_Compatible(string a, string b)
+bool logicalCompatible(string a)
 {
-    return true;
-    if(a == "int" && b == "int")
-        return true;
+    if(a == "")
+        return "";
+    if(a == "bool")
+        return "bool";
+    if(a == "int")
+        return "bool";
+    
+    if(a == "char")
+        return "";
+    if(a == "string")
+        return "bool";
+    if(a == "uint")
+        return "bool";
+    if(a == "float")
+        return "bool";
+    return "";
+}
+
+bool relationalCompatible(string a)
+{
+    if(a == "")
+        return "";
+    if(a == "int")
+        return "bool";
+    if(a == "float")
+        return "bool";
+    if(a == "string")
+        return "";
+    if(a == "char")
+        return "bool";
+    if(a == "unit")
+        return "bool";
+    if(a == "bool")
+        return "bool";
+    if(a == "file")
+        return "";
+    return "";
+}
+
+bool canBeAssigned(string a, string b)
+{
+    // Can be assigned to a.
+    int exp = getKey(a);
+    int got = getKey(b);
+
+    if(exp == 5 && got != 5)
+        return false;
+    if(exp == 6 && got != 6)
+        return false;
+    
     if(a == "bool" && b == "bool")
         return true;
-    if(a == "bool" && b== "int")
+    if(a == "bool" && b == "char")
+        return false;
+    if(a == "bool" && b == "uint")
+        return false;
+    if(a == "bool" && b == "int")
+        return false;
+    if(a == "bool" && b == "float")
+        return false;
+
+    if(a == "char" && b == "bool")
         return true;
-    if(b == "bool" && a== "int")
+    if(a == "char" && b == "char")
+        return true;
+    if(a == "char" && b == "uint")
+        return false;
+    if(a == "char" && b == "int")
+        return false;
+    if(a == "char" && b == "float")
+        return false;
+    
+    if(a == "uint" && b == "bool")
+        return true;
+    if(a == "uint" && b == "char")
+        return true;
+    if(a == "uint" && b == "uint")
+        return true;
+    if(a == "uint" && b == "int")
+        return false;
+    if(a == "uint" && b == "float")
+        return false;
+
+
+    if(a == "int" && b == "bool")
+        return true;
+    if(a == "int" && b == "char")
+        return true;
+    if(a == "int" && b == "uint")
+        return true;
+    if(a == "int" && b == "int")
+        return true;
+    if(a == "int" && b == "float")
+        return false;
+
+    if(a == "float")
+        return true;
+    return false;
+}
+
+bool possibleToCast(string a, string b)
+{
+    // Can be assigned to a.
+    int exp = getKey(a);
+    int got = getKey(b);
+
+    if(exp == 5 && got != 5)
+        return false;
+    if(exp == 6 && got != 6)
+        return false;
+    return true;
+    if(a == "bool" && b == "bool")
+        return true;
+    if(a == "bool" && b == "char")
+        return false;
+    if(a == "bool" && b == "uint")
+        return false;
+    if(a == "bool" && b == "int")
+        return false;
+    if(a == "bool" && b == "float")
+        return false;
+
+    if(a == "char" && b == "bool")
+        return true;
+    if(a == "char" && b == "char")
+        return true;
+    if(a == "char" && b == "uint")
+        return false;
+    if(a == "char" && b == "int")
+        return false;
+    if(a == "char" && b == "float")
+        return false;
+    
+    if(a == "uint" && b == "bool")
+        return true;
+    if(a == "uint" && b == "char")
+        return true;
+    if(a == "uint" && b == "uint")
+        return true;
+    if(a == "uint" && b == "int")
+        return false;
+    if(a == "uint" && b == "float")
+        return false;
+
+
+    if(a == "int" && b == "bool")
+        return true;
+    if(a == "int" && b == "char")
+        return true;
+    if(a == "int" && b == "uint")
+        return true;
+    if(a == "int" && b == "int")
+        return true;
+    if(a == "int" && b == "float")
+        return false;
+
+    if(a == "float")
         return true;
     return false;
 }
@@ -552,7 +663,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             count++;
         }
         if(count == 0 && datatype_method != "void"){    
-            cout << "hello\n";
+            //cout << "hello\n";
             node->expr = NULL;
             cout << "Semantic Error: Invalid returning value. Returning nothing but expected " << datatype_method << endl;            
             return (ASTStat*)node;
@@ -564,7 +675,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
 
         node->expr = visit(ctx->expr());
-        if(typeMatch(datatype_method, node->expr->eval_type)){
+        if(canBeAssigned(datatype_method, node->expr->eval_type) == true){
 
         }
         else if(node->expr->eval_type != ""){
@@ -607,8 +718,8 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
 
 
-        if(dat!= NULL && typeMatch(dat->dtype, node->expr->eval_type) == false && node->expr->eval_type != ""){
-            cout << "Semantic Error: Expected " << dat->dtype << " but found " << node->expr->eval_type << endl;
+        if(dat!= NULL && canBeAssigned(dat->dtype, node->expr->eval_type) == false && node->expr->eval_type != ""){
+            cout << "Semantic Error: Expected " << dat->dtype << " but found " << node->expr->eval_type << " while assigning to variable " << node->id->name  << endl;
         }
         // cout << ((ASTINTLIT*)(node->expr))->value;
         return (ASTAssign *) node;
@@ -648,15 +759,17 @@ class MiniCBuildASTVisitor : public MiniCVisitor
                 int cnt = 0;
                 for(auto arg: vec)
                 {
-                    if(typeMatch(arg->dtype, express[cnt++]->eval_type)){
+                    if(canBeAssigned(arg->dtype, express[cnt++]->eval_type) == true){
 
                     }
                     else{
+                        cout << "Semantic Error: Type of arguments at position " << cnt << " do not match definition of " << ctx->ID()->getText() << "(). Expected " << arg->dtype << " but found " << express[cnt- 1]->eval_type << endl;
                         ok = 0;
                     }
+                    // cnt++;
                 }
                 if(ok == 0){
-                    cout << "Semantic Error: Type of arguments do not match definition of " << ctx->ID()->getText() << "()\n";
+                    // cout << "Semantic Error: Type of arguments do not match definition of " << ctx->ID()->getText() << "()\n";
                     node->eval_type = "";
                 }
             }
@@ -680,10 +793,12 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->false_expr = visit(ctx->expr8(2));
         node->type = "ter";
         
-        if(!typeMatch(node->true_expr->eval_type, node->false_expr->eval_type)){
-            cout << "Semantic Error: Different data types for true and false expressions.\n";
-        }
+        node->eval_type = getCastedType(node->true_expr->eval_type, node->false_expr->eval_type);
 
+        if(node->true_expr->eval_type == "" || node->false_expr->eval_type == ""){
+        }
+        else if(node->eval_type == "")
+            cout << "Semantic Error: Different data types for true and false expressions.\n";
         return (ASTExpr *)node;
     }
 
@@ -698,16 +813,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr7());
         node->right = visit(ctx->expr6());
         
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = logicalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(and_or_Compatible(node->left->eval_type, node->right->eval_type))
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform || operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform || on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
         
         
@@ -721,16 +833,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr6());
         node->right = visit(ctx->expr5());
 
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = logicalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(and_or_Compatible(node->left->eval_type, node->right->eval_type))
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform && operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform && on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
 
 
@@ -748,16 +857,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr5());
         node->right = visit(ctx->expr4());
         
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = relationalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(node->left->eval_type == node->right->eval_type)
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform == operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform == on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
         
         
@@ -775,16 +881,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr5());
         node->right = visit(ctx->expr4());
 
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = relationalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(node->left->eval_type == node->right->eval_type)
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform != operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform != on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
 
 
@@ -798,16 +901,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr4());
         node->right = visit(ctx->expr3());
 
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = relationalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform >= operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform >= on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
 
 
@@ -822,16 +922,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr4());
         node->right = visit(ctx->expr3());
 
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = relationalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform > operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform > on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
 
 
@@ -849,19 +946,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr3());
         node->right = visit(ctx->expr2());
         
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = relationalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
-        {
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform < operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
-        }
-        
-        
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform < on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        }        
         
         return (ASTExpr *)node;
     }
@@ -877,17 +969,15 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr3());
         node->right = visit(ctx->expr2());
 
-        if(node->left->eval_type == "" || node->right->eval_type == ""){
+        node->eval_type = relationalCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
+        if(node->left->eval_type == "" || node->right->eval_type == "")
+        {
             // Already handled before.
         }
-        else if(node->left->eval_type == node->right->eval_type && (node->left->eval_type != "string" && node->left->eval_type != "bool"))
-        {
-            node->eval_type = "bool";
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform <= on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform <= operation on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
-        }
+
         return (ASTExpr *)node;
     }
 
@@ -898,18 +988,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr2());
         node->right = visit(ctx->expr1());
         
+        node->eval_type = addSubMulDivCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
         if(node->left->eval_type == "" || node->right->eval_type == "")
         {
             // Already handled before.
         }
-        else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
-            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
-            if(node->eval_type == "")
-            cout << "Semantic Error: Type mismatch. Cannot perform Subtraction on " << node->left->eval_type << " and " << node->right->eval_type << endl;
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform Subtraction on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform subtraction on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
         
         
@@ -924,22 +1009,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->right = visit(ctx->expr1());
         
         
+        node->eval_type = addSubMulDivCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
         if(node->left->eval_type == "" || node->right->eval_type == "")
         {
             // Already handled before.
         }
-        else if(addCompatible(node->left->eval_type) && addCompatible(node->right->eval_type)){
-            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
-            if(node->eval_type == "")
-            cout << "Semantic Error: Type mismatch. Cannot perform Addition on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform addition on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform Addition on " << node->left->eval_type << " and " << node->right->eval_type << endl;
-        }
-        
-        
-        
         
         return (ASTExpr *)node;
     }
@@ -955,22 +1032,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr1());
         node->right = visit(ctx->expr0());
 
-
+        node->eval_type = modCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
         if(node->left->eval_type == "" || node->right->eval_type == "")
         {
             // Already handled before.
         }
-        else if(mod_Compatible(node->left->eval_type) && mod_Compatible(node->right->eval_type)){
-            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
-            if(node->eval_type == "")
-            cout << "Semantic Error: Type mismatch. Cannot perform modulo on " << node->left->eval_type << " and " << node->right->eval_type << endl;          
-        }
-        else{
-            node->eval_type = "";
+        else if(node->eval_type == ""){
             cout << "Semantic Error: Type mismatch. Cannot perform modulo on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
-
-
 
         return (ASTExpr *)node;
     }
@@ -987,21 +1056,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->right = visit(ctx->expr0());
         
         
+        node->eval_type = addSubMulDivCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
         if(node->left->eval_type == "" || node->right->eval_type == "")
         {
             // Already handled before.
         }
-        else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
-            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
-            if(node->eval_type == "")
-            cout << "Semantic Error: Type mismatch. Cannot perform divide on " << node->left->eval_type << " and " << node->right->eval_type << endl;               
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Type mismatch. Cannot perform divide on " << node->left->eval_type << " and " << node->right->eval_type << endl;
-        }
-        
-        
+        else if(node->eval_type == ""){
+            cout << "Semantic Error: Type mismatch. Cannot perform division on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+        } 
         
         return (ASTExpr *)node;
     }
@@ -1013,17 +1075,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->left = visit(ctx->expr1());
         node->right = visit(ctx->expr0());
 
+
+        node->eval_type = addSubMulDivCompatible(getCastedType(node->left->eval_type, node->right->eval_type));
         if(node->left->eval_type == "" || node->right->eval_type == "")
         {
             // Already handled before.
         }
-        else if(sub_mul_div_Compatible(node->left->eval_type) && sub_mul_div_Compatible(node->right->eval_type)){
-            node->eval_type = newType(node->left->eval_type, node->right->eval_type);
-            if(node->eval_type == "")
-                cout << "Semantic Error: Type mismatch. Cannot perform multiplication on " << node->left->eval_type << " and " << node->right->eval_type << endl;            
-        }
-        else{
-            node->eval_type = "";
+        else if(node->eval_type == ""){
             cout << "Semantic Error: Type mismatch. Cannot perform multiplication on " << node->left->eval_type << " and " << node->right->eval_type << endl;
         }
         return (ASTExpr *)node;
@@ -1032,7 +1090,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitId_expr(MiniCParser::Id_exprContext *ctx) override {
         ASTID* node = new ASTID();
         node = visit(ctx->identifier());
-        
+        node->type = "id";
         int addrs_dim = node->addrs.size();
 
         ASTDtype* dat = look_up_variable(node);
@@ -1062,27 +1120,22 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
     virtual antlrcpp::Any visitNot_expr(MiniCParser::Not_exprContext *ctx) override {
         ASTNot *node = new ASTNot;
+        node->type = "not";
         node->expr = visit(ctx->expr());
-        if(node->expr->eval_type == "bool"){
-            node->eval_type = "bool";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Cannot apply Not operator on " << node->expr->eval_type << endl;;
-        }
+
+        node->eval_type = logicalCompatible(node->expr->eval_type);
+        if(node->eval_type == "" && node->expr->eval_type != "")
+            cout << "Semantic Error: Cannot apply Not operator on " << node->expr->eval_type << endl;
         return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitNegate_expr(MiniCParser::Negate_exprContext *ctx) override {
         ASTNeg *node = new ASTNeg;
+        node->type = "neg";
         node->expr = visit(ctx->expr());
-        if(node->expr->eval_type == "int"){
-            node->eval_type = "int";
-        }
-        else{
-            node->eval_type = "";
-            cout << "Semantic Error: Cannot apply Negate operator on " << node->expr->eval_type << endl;;
-        }
+        node->eval_type = addSubMulDivCompatible(node->expr->eval_type);
+        if(node->eval_type == "" && node->expr->eval_type != "")
+            cout << "Semantic Error: Cannot apply Negate operator on " << node->expr->eval_type << endl;
         return (ASTExpr*) node;
     }
 
@@ -1093,18 +1146,37 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     virtual antlrcpp::Any visitInp_int(MiniCParser::Inp_intContext *ctx) override {
         Inp *node = new Inp();
         node->eval_type = "int";
+        node->type = "input";
         return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitInp_char(MiniCParser::Inp_charContext *ctx) override {
         Inp *node = new Inp();
         node->eval_type = "char";
+        node->type = "input";
         return (ASTExpr*) node;
     }
 
     virtual antlrcpp::Any visitInp_bool(MiniCParser::Inp_boolContext *ctx) override {
         Inp *node = new Inp();
         node->eval_type = "bool";
+        node->type = "input";
+        return (ASTExpr*) node;
+    }
+
+    virtual antlrcpp::Any visitCast(MiniCParser::CastContext *ctx) override {
+        ASTCast* node = new ASTCast();
+        node->expr = visit(ctx->expr());
+        node->dat = visit(ctx->type());
+        if(!possibleToCast(node->expr->eval_type, node->dat->dtype))
+        {
+            cout << "Semantic Error: Bad Cast!\n";
+            node->eval_type = "";
+        }
+        else{
+            node->eval_type = node->dat->dtype;
+        }
+        
         return (ASTExpr*) node;
     }
 

@@ -31,6 +31,7 @@ class ASTWhile;
 class ASTBreak;
 class ASTContinue;
 class ASTReturn;
+class ASTCast;
 class ASTvisitor
 {
 public:
@@ -64,6 +65,7 @@ public:
     virtual void visit(ASTContinue &node) = 0;
     virtual void visit(ASTWhile &node) = 0;
     virtual void visit(ASTReturn &node) = 0;
+    virtual void visit(ASTCast &node) = 0;
 };
 
 class ASTnode
@@ -142,6 +144,16 @@ class ASTReturn : public ASTStat
 class ASTBreak : public ASTStat
 {
     public:
+    virtual void accept(ASTvisitor &V){
+        V.visit(*this);
+    }
+};
+
+class ASTCast : public ASTExpr
+{
+    public:
+    ASTExpr* expr;
+    ASTDtype* dat;
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }

@@ -63,7 +63,8 @@ int main()
     }
     radixsort();
     for(i = 0; i < N; i = i + 1){
-        print(A[i] + " ");
+        print(A[i]);
+        print(" ");
     }
         
     println("");

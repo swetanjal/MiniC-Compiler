@@ -20,7 +20,8 @@ int main()
         {
             B[i][j] = read_int();
             res[i][j] = A[i][j] + B[i][j];
-            print(res[i][j] + " ");
+            print(res[i][j]);
+            print(" ");
         }
         println("");
     }

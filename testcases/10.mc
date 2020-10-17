@@ -41,7 +41,8 @@ int main()
                 tmp = tmp + (A[i][k] * B[k][j]);
             }
             res[i][j] = tmp;
-            print(res[i][j] + " ");
+            print(res[i][j]);
+            print(" ");
         }
         println("");
     }
