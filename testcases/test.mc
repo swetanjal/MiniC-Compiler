@@ -9,11 +9,18 @@ int main()
 {
     int A[5][3][4];
     int b, c;
+    b = read_int();
     b = A[1][3][2];
-    a(b, 'd');
+    
+    
+    
+    
+    w(b, 'd');
+
+
     while(true)
     {
-        while((3+4) * 5)
+        while((3+4)? 6 : 5)
         {
             break;
         }

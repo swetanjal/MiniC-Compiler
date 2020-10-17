@@ -2,6 +2,8 @@ int main()
 {
     FILE fp;
     int c, i, small[26], caps[26];
+    
+    
     fp = fopen("test.txt", "r");
     for(i = 0; i < 26; i = i + 1)
     {
