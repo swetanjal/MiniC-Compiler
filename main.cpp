@@ -8,10 +8,10 @@
 
 #include "PrettyPrint.h"
 //#include "ast.h"
-
+#include "common.h"
 using namespace std;
 using namespace antlr4;
-
+int errors_IR = 0;
 int main(int argc, const char* argv[]) {
     std::ifstream stream;
 
@@ -31,5 +31,10 @@ int main(int argc, const char* argv[]) {
     cout << "********** Pretty Printing the program **********\n";    
     PrettyPrint *pv = new PrettyPrint();
     pv->visit(*program_root);
+    // Time to generate LLVM IR
+    ASTProg* root = new ASTProg();
+    root->Codegen();
+    if(errors_IR == 0)
+        root->generateCodeDump();
     return 0;
 }

@@ -1,0 +1,2 @@
+; ModuleID = 'MiniC compiler'
+source_filename = "MiniC compiler"

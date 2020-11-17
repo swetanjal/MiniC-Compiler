@@ -1,5 +1,28 @@
 #include "bits/stdc++.h"
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/CallingConv.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+// #include <llvm/ExecutionEngine/MCJIT.h>
+#include <llvm/Support/raw_ostream.h>
+#include "common.h"
 using namespace std;
+using namespace llvm;
+
+static LLVMContext Context;
+static Module *TheModule = new Module("MiniC compiler", Context); // Contains all functions and variables
+static IRBuilder<> Builder(Context); // helps to generate LLVM IR with helper functions
+static map <string, AllocaInst*>NamedValues; // keeps track of all the values defined in the current scope like a symbol table
+
 
 class ASTProg;
 class ASTExpr;
@@ -78,6 +101,7 @@ public:
     }
     //  virtual void printPostFix() const = 0;
     virtual void accept(ASTvisitor &V) = 0;
+    virtual Value* Codegen();
 };
 
 class ASTProg : public ASTnode
@@ -87,6 +111,19 @@ class ASTProg : public ASTnode
     virtual void accept(ASTvisitor &V)
     {
         V.visit(*this);
+    }
+    virtual Value* Codegen();
+    void generateCodeDump()
+    {
+        cerr << "Generating LLVM IR Code\n\n";
+        std::string Str;
+        raw_string_ostream OS(Str);
+        OS << *TheModule;
+        OS.flush();
+        ofstream out("llvmir.txt");
+        out << Str;
+        out.close();
+        cerr << "Finished writing to llvmir.txt\n";
     }
 };
 
@@ -99,6 +136,7 @@ class ASTDecl : public ASTnode
     }
     string type; // Type can be "var" or "meth"
     virtual void accept(ASTvisitor &V) = 0;
+    virtual Value* Codegen();
 };
 
 class ASTExpr : public ASTnode
@@ -111,6 +149,7 @@ class ASTExpr : public ASTnode
     string eval_type; // Would be useful to do type checking. 
     string type; // "bin" "ter" "id" "*_lit" "call" "not" "neg" "inp_int" "inp_char" "inp_bool" "exp"
     virtual void accept(ASTvisitor &V) = 0;
+    virtual Value* Codegen();
 };
 
 class ASTStat : public ASTnode
@@ -122,6 +161,7 @@ class ASTStat : public ASTnode
     }
     string type; // "assn_lst" "method_call" "if" "for" "while" "break" "continue" "block" "return" "print" "println"
     virtual void accept(ASTvisitor &V) = 0;
+    virtual Value* Codegen();
 };
 
 class ASTWhile : public ASTStat
@@ -132,6 +172,7 @@ class ASTWhile : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTReturn : public ASTStat
@@ -141,6 +182,7 @@ class ASTReturn : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTBreak : public ASTStat
@@ -149,6 +191,7 @@ class ASTBreak : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTCast : public ASTExpr
@@ -159,6 +202,7 @@ class ASTCast : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTContinue: public ASTStat
@@ -167,6 +211,7 @@ class ASTContinue: public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTFor : public ASTStat
@@ -179,6 +224,7 @@ class ASTFor : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 class ASTStatAssn : public ASTStat
 {
@@ -187,6 +233,7 @@ class ASTStatAssn : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 class ASTStatCall : public ASTStat
 {
@@ -195,6 +242,7 @@ class ASTStatCall : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTIFStat : public ASTStat
@@ -206,6 +254,7 @@ class ASTIFStat : public ASTStat
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTPrint : public ASTStat
@@ -216,6 +265,7 @@ class ASTPrint : public ASTStat
     {
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTPrintln : public ASTStat
@@ -226,6 +276,7 @@ class ASTPrintln : public ASTStat
     {
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTNot : public ASTExpr
@@ -235,6 +286,7 @@ class ASTNot : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTNeg : public ASTExpr
@@ -244,6 +296,7 @@ class ASTNeg : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class Inp : public ASTExpr
@@ -252,6 +305,7 @@ class Inp : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTVarDecl : public ASTDecl
@@ -263,6 +317,7 @@ class ASTVarDecl : public ASTDecl
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTMethodDecl : public ASTDecl
@@ -275,6 +330,7 @@ class ASTMethodDecl : public ASTDecl
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTDtype : public ASTnode
@@ -284,6 +340,7 @@ class ASTDtype : public ASTnode
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTID : public ASTExpr{
@@ -294,6 +351,7 @@ class ASTID : public ASTExpr{
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTINTLIT : public ASTExpr{
@@ -302,6 +360,7 @@ class ASTINTLIT : public ASTExpr{
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTFLOATLIT : public ASTExpr{
@@ -310,6 +369,7 @@ class ASTFLOATLIT : public ASTExpr{
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTCHARLIT : public ASTExpr{
@@ -318,6 +378,7 @@ class ASTCHARLIT : public ASTExpr{
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTSTRINGLIT : public ASTExpr{
@@ -326,6 +387,7 @@ class ASTSTRINGLIT : public ASTExpr{
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTBOOLLIT : public ASTExpr{
@@ -334,6 +396,7 @@ class ASTBOOLLIT : public ASTExpr{
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTAssign : public ASTnode
@@ -345,6 +408,7 @@ class ASTAssign : public ASTnode
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTExprCall : public ASTExpr
@@ -355,6 +419,7 @@ class ASTExprCall : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTExprBinary : public ASTExpr
@@ -366,6 +431,7 @@ class ASTExprBinary : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTExprTernary : public ASTExpr
@@ -377,6 +443,7 @@ class ASTExprTernary : public ASTExpr
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
 
 class ASTBlock : public ASTnode
@@ -387,4 +454,5 @@ class ASTBlock : public ASTnode
     virtual void accept(ASTvisitor &V){
         V.visit(*this);
     }
+    virtual Value* Codegen();
 };
