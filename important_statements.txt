@@ -1,0 +1,13 @@
+    std::vector<Type*> Doubles(0,
+                             Type::getDoubleTy(Context));
+  
+    FunctionType *FT = FunctionType::get(Type::getVoidTy(Context), Doubles, false);
+    Function *F = Function::Create(FT, Function::ExternalLinkage, "main", TheModule);
+    BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
+    Builder.SetInsertPoint(BB);
+    AllocaInst *allocaMem = allocateMemory(F, "a", "int");
+    NamedValues["a"] = allocaMem;
+    Builder.CreateStore(ConstantInt::get(Context, APInt(32, 1)) ,allocaMem);
+    Builder.CreateRetVoid();
+    
+    verifyFunction(*F);

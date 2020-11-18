@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include "ast.h"
+//#include "ast.h"
 #include "MiniCVisitor.h"
 #include "symboltable.h"
 using namespace std;

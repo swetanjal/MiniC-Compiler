@@ -3,7 +3,7 @@
 #include "antlr4-runtime.h"
 #include "MiniCLexer.cpp"
 #include "MiniCParser.cpp"
-
+#include "ast.h"
 #include "MiniCBuildASTVisitor.h"
 
 #include "PrettyPrint.h"
@@ -11,7 +11,7 @@
 #include "common.h"
 using namespace std;
 using namespace antlr4;
-int errors_IR = 0;
+
 int main(int argc, const char* argv[]) {
     std::ifstream stream;
 
