@@ -506,19 +506,20 @@ Value* ASTAssign::Codegen()
 }
 Value* ASTBlock::Codegen()
 {
+    Value* V;
     for(auto var_decl: var_declarations)
     {
-        var_decl->Codegen();
+        V = var_decl->Codegen();
     }
     for(auto statement: statements)
     {
-        statement->Codegen();
+        V = statement->Codegen();
     }
-    return nullptr;
+    return V;
 }
 Value* ASTID::Codegen()
 {
-    return nullptr;
+    return Builder.CreateLoad(NamedValues[name]);
 }
 Value* ASTDecl::Codegen()
 {
@@ -526,6 +527,7 @@ Value* ASTDecl::Codegen()
 }
 Value* ASTMethodDecl::Codegen()
 {
+    
     Type* ret_type;
     if(return_type == NULL)
     {
@@ -581,10 +583,10 @@ Value* ASTMethodDecl::Codegen()
     {
         Builder.CreateRetVoid();
     }
-    else
+    /*else
     {
         Builder.CreateRet(RetVal);    
-    }
+    }*/
     verifyFunction(*F);
     return F;
 }
@@ -658,10 +660,25 @@ Value* Inp::Codegen()
 }
 Value* ASTPrint::Codegen()
 {
-    return nullptr;
+    if(expr->eval_type == "int"){
+        Value* Version = expr->Codegen();
+        auto Int32Ty = Builder.getInt32Ty();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printint", Builder.getVoidTy(), Int32Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
+    
+    
 }
 Value* ASTPrintln::Codegen()
 {
+    if(expr->eval_type == "int"){
+        Value* Version = expr->Codegen();
+        auto Int32Ty = Builder.getInt32Ty();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printlnint", Builder.getVoidTy(), Int32Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
     return nullptr;
 }
 Value* ASTFor::Codegen()
@@ -682,7 +699,9 @@ Value* ASTContinue::Codegen()
 }
 Value* ASTReturn::Codegen()
 {
-    return nullptr;
+    if(expr == NULL)
+        return Builder.CreateRetVoid();
+    return Builder.CreateRet(expr->Codegen());
 }
 Value* ASTCast::Codegen()
 {
