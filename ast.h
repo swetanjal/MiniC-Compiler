@@ -472,7 +472,20 @@ AllocaInst *allocateMemory(Function *TheFunction, string VarName, string type) {
 
 Value* ASTProg::Codegen()
 {
-    return nullptr;
+    Value *V = ConstantInt::get(Context, APInt(32, 0));
+    for(auto decl: declarations)
+    {
+        if(decl->type == "meth")
+        {
+            // Process methods
+            V = decl->Codegen();
+            
+        }
+        else{
+            // Process global variables
+        }
+    }
+    return V;
 }
 Value* ASTExpr::Codegen()
 {
@@ -488,10 +501,19 @@ Value* ASTExprTernary::Codegen()
 }
 Value* ASTAssign::Codegen()
 {
-    return nullptr;
+    Builder.CreateStore(expr->Codegen() ,NamedValues[id->name]);
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTBlock::Codegen()
 {
+    for(auto var_decl: var_declarations)
+    {
+        var_decl->Codegen();
+    }
+    for(auto statement: statements)
+    {
+        statement->Codegen();
+    }
     return nullptr;
 }
 Value* ASTID::Codegen()
@@ -504,11 +526,75 @@ Value* ASTDecl::Codegen()
 }
 Value* ASTMethodDecl::Codegen()
 {
-    return nullptr;
+    Type* ret_type;
+    if(return_type == NULL)
+    {
+        ret_type = Type::getVoidTy(Context);
+    }
+    else if(return_type->dtype == "int")
+    {
+        ret_type = Type::getInt32Ty(Context);
+    }
+    else if(return_type->dtype == "bool")
+    {
+        ret_type = Type::getInt1Ty(Context);
+    }
+    std::vector<Type*> arguments;
+    for(auto param: args)
+    {
+        if(param->dat->dtype == "int")
+        {
+            arguments.push_back(Type::getInt32Ty(Context));
+        }
+        else if(param->dat->dtype == "bool")
+        {
+            arguments.push_back(Type::getInt1Ty(Context));
+        }
+    }
+    FunctionType *FT = FunctionType::get(ret_type, arguments, false);
+    Function *F = Function::Create(FT, Function::ExternalLinkage, name, TheModule);
+    unsigned Idx = 0;
+    for(auto &Arg : F->args())
+    {
+        Arg.setName(args[Idx++]->id->name);
+    }
+    BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
+    Builder.SetInsertPoint(BB);
+
+    Idx = 0;
+    
+    map <string, AllocaInst*> NamedValues_copy;
+    NamedValues_copy = NamedValues;
+    for(auto &Arg : F->args())
+    {
+        AllocaInst *Alloca = allocateMemory(F, args[Idx]->id->name, args[Idx]->dat->dtype);
+        Builder.CreateStore(&Arg, Alloca);
+        NamedValues[args[Idx]->id->name] = Alloca;
+        Idx++;
+    }
+
+    Value* RetVal = block->Codegen();
+    // Restore symbol table after coming out of function.
+    
+    NamedValues = NamedValues_copy;
+    if(return_type == NULL)
+    {
+        Builder.CreateRetVoid();
+    }
+    else
+    {
+        Builder.CreateRet(RetVal);    
+    }
+    verifyFunction(*F);
+    return F;
 }
 Value* ASTVarDecl::Codegen()
 {
-    return nullptr;
+    // For the time being support only non arrays.
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    AllocaInst *allocaMem = allocateMemory(TheFunction, id->name, dat->dtype);
+    NamedValues[id->name] = allocaMem;
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTStat::Codegen()
 {
@@ -520,7 +606,7 @@ Value* ASTDtype::Codegen()
 }
 Value* ASTINTLIT::Codegen()
 {
-    return nullptr;
+    return ConstantInt::get(Context, APInt(32, value));
 }
 Value* ASTFLOATLIT::Codegen()
 {
@@ -532,6 +618,14 @@ Value* ASTSTRINGLIT::Codegen()
 }
 Value* ASTBOOLLIT::Codegen()
 {
+    if(value == "true")
+    {
+        return ConstantInt::get(Context, APInt(1, 1));
+    }
+    else if(value == "false")
+    {
+        return ConstantInt::get(Context, APInt(1, 0));
+    }
     return nullptr;
 }
 Value* ASTCHARLIT::Codegen()
@@ -596,7 +690,11 @@ Value* ASTCast::Codegen()
 }
 Value* ASTStatAssn::Codegen()
 {
-    return nullptr;
+    for(auto assn: assignments)
+    {
+        assn->Codegen();
+    }
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 
 Value* ASTnode::Codegen()

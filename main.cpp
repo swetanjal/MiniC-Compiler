@@ -32,9 +32,8 @@ int main(int argc, const char* argv[]) {
     PrettyPrint *pv = new PrettyPrint();
     pv->visit(*program_root);
     // Time to generate LLVM IR
-    ASTProg* root = new ASTProg();
-    root->Codegen();
+    program_root->Codegen();
     if(errors_IR == 0)
-        root->generateCodeDump();
+        program_root->generateCodeDump();
     return 0;
 }
