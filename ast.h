@@ -493,6 +493,28 @@ Value* ASTExpr::Codegen()
 }
 Value* ASTExprBinary::Codegen()
 {
+    Value* operand1 = left->Codegen();
+    Value* operand2 = right->Codegen();
+    if(op == "+")
+    {
+        return Builder.CreateAdd(operand1, operand2, "add");
+    }
+    else if(op == "-")
+    {
+        return Builder.CreateSub(operand1, operand2, "sub");
+    }
+    else if(op == "*")
+    {
+        return Builder.CreateMul(operand1, operand2, "mult");
+    }
+    else if(op == "/")
+    {
+        return Builder.CreateSDiv(operand1, operand2, "div");
+    }
+    else if(op == "%")
+    {
+        return Builder.CreateSRem(operand1, operand2, "mod");
+    }
     return nullptr;
 }
 Value* ASTExprTernary::Codegen()
@@ -636,15 +658,59 @@ Value* ASTCHARLIT::Codegen()
 }
 Value* ASTExprCall::Codegen()
 {
-    return nullptr;
+    Function *CalleeF = TheModule->getFunction(name);
+    if (!CalleeF)
+        cout << "Unknown function referenced\n";
+
+    // If argument mismatch error.
+    if (CalleeF->arg_size() != args.size())
+        cout << "Incorrect # arguments passed\n";
+    std::vector<Value *> ArgsV;
+    for (unsigned i = 0, e = args.size(); i != e; ++i) {
+        ArgsV.push_back(args[i]->Codegen());
+    }
+    return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
 }
 Value* ASTStatCall::Codegen()
 {
-    return nullptr;
+    return expr->Codegen();
 }
 Value* ASTIFStat::Codegen()
 {
-    return nullptr;
+    Value *CondV = expr->Codegen();
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *ifBlock = BasicBlock::Create(Context, "if", TheFunction);
+    BasicBlock *elseBlock = BasicBlock::Create(Context, "else");
+    BasicBlock *MergeBB = BasicBlock::Create(Context, "ifcont");
+
+    if(expr->eval_type == "int")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "ifcond"); 
+    }
+    else if(expr->eval_type == "bool")
+    {
+        CondV = CondV;
+    }
+    
+    Builder.CreateCondBr(CondV, ifBlock, elseBlock);
+
+    Builder.SetInsertPoint(ifBlock);
+    Value *ThenV = if_block->Codegen();
+    Builder.CreateBr(MergeBB);
+    ifBlock = Builder.GetInsertBlock();
+
+    TheFunction->getBasicBlockList().push_back(elseBlock);
+    Builder.SetInsertPoint(elseBlock);
+
+    Value *ElseV = else_block->Codegen();
+    
+    Builder.CreateBr(MergeBB);
+    // codegen of 'Else' can change the current block, update ElseBB for the PHI.
+    elseBlock = Builder.GetInsertBlock();
+    TheFunction->getBasicBlockList().push_back(MergeBB);
+    Builder.SetInsertPoint(MergeBB);
+
+    return ConstantInt::get(Context, APInt(32, 1));;
 }
 Value* ASTNot::Codegen()
 {
@@ -667,8 +733,6 @@ Value* ASTPrint::Codegen()
         auto Fn = M->getOrInsertFunction("printint", Builder.getVoidTy(), Int32Ty);
         return Builder.CreateCall(Fn, Version);
     }
-    
-    
 }
 Value* ASTPrintln::Codegen()
 {

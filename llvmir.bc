@@ -1,12 +1,34 @@
 ; ModuleID = 'MiniC compiler'
 source_filename = "MiniC compiler"
 
+define i32 @sum(i32 %a, i32 %b) {
+entry:
+  %b2 = alloca i32
+  %a1 = alloca i32
+  store i32 %a, i32* %a1
+  store i32 %b, i32* %b2
+  %0 = load i32, i32* %a1
+  %1 = load i32, i32* %b2
+  %add = add i32 %0, %1
+  ret i32 %add
+}
+
 define i32 @main() {
 entry:
+  %c = alloca i32
+  %b = alloca i32
   %a = alloca i32
-  store i32 5, i32* %a
-  %0 = load i32, i32* %a
-  call void @printlnint(i32 %0)
+  br i1 true, label %if, label %else
+
+if:                                               ; preds = %entry
+  call void @printlnint(i32 1)
+  br label %ifcont
+
+else:                                             ; preds = %entry
+  call void @printlnint(i32 2)
+  br label %ifcont
+
+ifcont:                                           ; preds = %else, %if
   ret i32 0
 }
 
