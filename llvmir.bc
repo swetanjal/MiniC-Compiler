@@ -19,21 +19,34 @@ entry:
   %b = alloca i32
   %a = alloca i32
   store i32 3, i32* %a
+  br label %loop_cond
+
+loop_cond:                                        ; preds = %end_assn, %entry
   %0 = load i32, i32* %a
   %for_cond = icmp ne i32 %0, 0
   br i1 %for_cond, label %loop, label %after
 
-loop:                                             ; preds = %loop, %entry
+loop:                                             ; preds = %loop_cond
+  store i32 3, i32* %b
   %1 = load i32, i32* %a
-  call void @printlnint(i32 %1)
-  %2 = load i32, i32* %a
-  %sub = sub i32 %2, 1
-  store i32 %sub, i32* %a
-  %3 = load i32, i32* %a
-  %for_cond1 = icmp ne i32 %3, 0
-  br i1 %for_cond1, label %loop, label %after
+  %2 = load i32, i32* %b
+  %add = add i32 %1, %2
+  call void @printlnint(i32 %add)
+  br label %continue
 
-after:                                            ; preds = %loop, %entry
+continue:                                         ; preds = %loop
+  br label %end_assn
+
+after_continue:                                   ; No predecessors!
+  br label %end_assn
+
+end_assn:                                         ; preds = %after_continue, %continue
+  %3 = load i32, i32* %a
+  %sub = sub i32 %3, 1
+  store i32 %sub, i32* %a
+  br label %loop_cond
+
+after:                                            ; preds = %loop_cond
   ret i32 0
 }
 

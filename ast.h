@@ -458,6 +458,9 @@ class ASTBlock : public ASTnode
     virtual Value* Codegen();
 };
 
+BasicBlock *Continue = nullptr;
+BasicBlock *Break = nullptr;
+
 AllocaInst *allocateMemory(Function *TheFunction, string VarName, string type) {
     IRBuilder<> builder(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     AllocaInst *alloca_instruction = nullptr;
@@ -756,37 +759,44 @@ Value* ASTFor::Codegen()
 {
 
     Function *TheFunction = Builder.GetInsertBlock()->getParent();
-    BasicBlock *loopBB = BasicBlock::Create(Context, "loop", TheFunction);
+    BasicBlock *condBB = BasicBlock::Create(Context, "loop_cond", TheFunction);
+    BasicBlock *loopBB = BasicBlock::Create(Context, "loop");
+    BasicBlock *endAssnBB = BasicBlock::Create(Context, "end_assn");
     BasicBlock *afterLoopBB = BasicBlock::Create(Context, "after");
 
     
     Value* tmp = nullptr;
     for(auto assn: beg_assigns)
         tmp = assn->Codegen();
+    
+    Builder.CreateBr(condBB);
+    Builder.SetInsertPoint(condBB);
     Value* CondV = exprs[0]->Codegen();
     if(exprs[0]->eval_type == "int")
         CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "for_cond"); 
     else if(exprs[0]->eval_type == "bool")
         CondV = CondV;
-
     Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
+    
+    TheFunction->getBasicBlockList().push_back(loopBB);
     Builder.SetInsertPoint(loopBB);
-    Value* v = block->Codegen();
 
+    BasicBlock *prevBreak = Break;
+    BasicBlock *prevContinue = Continue;
+    Continue = endAssnBB;
+    Break = afterLoopBB;
+    Value* v = block->Codegen();
+    Continue = prevContinue;
+    Break = prevBreak;
+    
+    
+    TheFunction->getBasicBlockList().push_back(endAssnBB);
+    Builder.CreateBr(endAssnBB);
+    Builder.SetInsertPoint(endAssnBB);
+    // loopBB = Builder.GetInsertBlock();
     for(auto assn: assigns)
-    {
         tmp = assn->Codegen();
-    }
-    CondV = exprs[0]->Codegen();
-    if(exprs[0]->eval_type == "int")
-    {
-        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "for_cond"); 
-    }
-    else if(exprs[0]->eval_type == "bool")
-    {
-        CondV = CondV;
-    }
-    Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
+    Builder.CreateBr(condBB);
 
     TheFunction->getBasicBlockList().push_back(afterLoopBB);
     Builder.SetInsertPoint(afterLoopBB);
@@ -810,7 +820,15 @@ Value* ASTWhile::Codegen()
 
     Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
     Builder.SetInsertPoint(loopBB);
+
+    BasicBlock *prevBreak = Break;
+    BasicBlock *prevContinue = Continue;
+    Continue = loopBB;
+    Break = afterLoopBB;
     Value* v = block->Codegen();
+    Continue = prevContinue;
+    Break = prevBreak;
+
     CondV = expr->Codegen();
     if(expr->eval_type == "int")
     {
@@ -829,11 +847,27 @@ Value* ASTWhile::Codegen()
 }
 Value* ASTBreak::Codegen()
 {
-    return nullptr;
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *breakBB = BasicBlock::Create(Context, "break", TheFunction);
+    BasicBlock *afterBreak = BasicBlock::Create(Context, "after_break");
+    Builder.CreateBr(breakBB);
+    Builder.SetInsertPoint(breakBB);
+    Builder.CreateBr(Break);
+    TheFunction->getBasicBlockList().push_back(afterBreak);
+    Builder.SetInsertPoint(afterBreak);
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTContinue::Codegen()
 {
-    return nullptr;
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *continueBB = BasicBlock::Create(Context, "continue", TheFunction);
+    BasicBlock *afterContinue = BasicBlock::Create(Context, "after_continue");
+    Builder.CreateBr(continueBB);
+    Builder.SetInsertPoint(continueBB);
+    Builder.CreateBr(Continue);
+    TheFunction->getBasicBlockList().push_back(afterContinue);
+    Builder.SetInsertPoint(afterContinue);
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTReturn::Codegen()
 {
