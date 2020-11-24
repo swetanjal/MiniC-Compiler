@@ -11,3 +11,16 @@
     Builder.CreateRetVoid();
     
     verifyFunction(*F);
+
+    ConstantInt::get(Context, APInt(32, 1));;
+
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *ifBlock = BasicBlock::Create(Context, "if", TheFunction);
+    Builder.CreateCondBr(CondV, ifBlock, elseBlock);
+
+    Builder.SetInsertPoint(ifBlock);
+    Value *ThenV = if_block->Codegen();
+    Builder.CreateBr(MergeBB);
+
+    TheFunction->getBasicBlockList().push_back(elseBlock);
+    Builder.SetInsertPoint(elseBlock);

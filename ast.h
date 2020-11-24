@@ -528,6 +528,8 @@ Value* ASTAssign::Codegen()
 }
 Value* ASTBlock::Codegen()
 {
+    map <string, AllocaInst*> NamedValues_copy;
+    NamedValues_copy = NamedValues;
     Value* V;
     for(auto var_decl: var_declarations)
     {
@@ -537,6 +539,7 @@ Value* ASTBlock::Codegen()
     {
         V = statement->Codegen();
     }
+    NamedValues = NamedValues_copy;
     return V;
 }
 Value* ASTID::Codegen()
@@ -691,22 +694,26 @@ Value* ASTIFStat::Codegen()
     {
         CondV = CondV;
     }
+    if(else_block != NULL)
+        Builder.CreateCondBr(CondV, ifBlock, elseBlock);
+    else
+        Builder.CreateCondBr(CondV, ifBlock, MergeBB);
     
-    Builder.CreateCondBr(CondV, ifBlock, elseBlock);
-
     Builder.SetInsertPoint(ifBlock);
     Value *ThenV = if_block->Codegen();
     Builder.CreateBr(MergeBB);
     ifBlock = Builder.GetInsertBlock();
 
-    TheFunction->getBasicBlockList().push_back(elseBlock);
-    Builder.SetInsertPoint(elseBlock);
+    if(else_block != NULL){
+        TheFunction->getBasicBlockList().push_back(elseBlock);
+        Builder.SetInsertPoint(elseBlock);
 
-    Value *ElseV = else_block->Codegen();
+        Value *ElseV = else_block->Codegen();
     
-    Builder.CreateBr(MergeBB);
-    // codegen of 'Else' can change the current block, update ElseBB for the PHI.
-    elseBlock = Builder.GetInsertBlock();
+        Builder.CreateBr(MergeBB);
+        // codegen of 'Else' can change the current block, update ElseBB for the PHI.
+        elseBlock = Builder.GetInsertBlock();
+    }
     TheFunction->getBasicBlockList().push_back(MergeBB);
     Builder.SetInsertPoint(MergeBB);
 
@@ -751,7 +758,37 @@ Value* ASTFor::Codegen()
 }
 Value* ASTWhile::Codegen()
 {
-    return nullptr;
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *loopBB = BasicBlock::Create(Context, "loop", TheFunction);
+    BasicBlock *afterLoopBB = BasicBlock::Create(Context, "after");
+    Value* CondV = expr->Codegen();
+    if(expr->eval_type == "int")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "while_cond"); 
+    }
+    else if(expr->eval_type == "bool")
+    {
+        CondV = CondV;
+    }
+
+    Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
+    Builder.SetInsertPoint(loopBB);
+    Value* v = block->Codegen();
+    CondV = expr->Codegen();
+    if(expr->eval_type == "int")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "while_cond"); 
+    }
+    else if(expr->eval_type == "bool")
+    {
+        CondV = CondV;
+    }
+    Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
+
+    TheFunction->getBasicBlockList().push_back(afterLoopBB);
+    Builder.SetInsertPoint(afterLoopBB);
+
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTBreak::Codegen()
 {

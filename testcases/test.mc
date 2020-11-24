@@ -5,12 +5,17 @@ int sum(int a, int b)
 int main()
 {
     int a, b, c;
-    if(1)
+    a = 3;
+    while(a)
     {
-        println(1);
+        a = a - 1;
+        println(a);
     }
-    else{
-        println(2);
+    a = 5
+    while(a)
+    {
+        println(a);
+        a = a - 1;
     }
     return 0;
 }
