@@ -47,6 +47,31 @@ end_assn:                                         ; preds = %after_continue, %co
   br label %loop_cond
 
 after:                                            ; preds = %loop_cond
+  store i32 5, i32* %c
+  %4 = load i32, i32* %c
+  %while_cond = icmp ne i32 %4, 0
+  br i1 %while_cond, label %loop1, label %after7
+
+loop1:                                            ; preds = %end_assn5, %after
+  %5 = load i32, i32* %c
+  %sub2 = sub i32 %5, 1
+  store i32 %sub2, i32* %c
+  br label %continue3
+
+continue3:                                        ; preds = %loop1
+  br label %end_assn5
+
+after_continue4:                                  ; No predecessors!
+  %6 = load i32, i32* %c
+  call void @printlnint(i32 %6)
+  br label %end_assn5
+
+end_assn5:                                        ; preds = %after_continue4, %continue3
+  %7 = load i32, i32* %c
+  %while_cond6 = icmp ne i32 %7, 0
+  br i1 %while_cond6, label %loop1, label %after7
+
+after7:                                           ; preds = %end_assn5, %after
   ret i32 0
 }
 

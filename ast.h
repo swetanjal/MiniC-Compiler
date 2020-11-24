@@ -807,6 +807,7 @@ Value* ASTWhile::Codegen()
 {
     Function *TheFunction = Builder.GetInsertBlock()->getParent();
     BasicBlock *loopBB = BasicBlock::Create(Context, "loop", TheFunction);
+    BasicBlock *endAssnBB = BasicBlock::Create(Context, "end_assn");
     BasicBlock *afterLoopBB = BasicBlock::Create(Context, "after");
     Value* CondV = expr->Codegen();
     if(expr->eval_type == "int")
@@ -823,12 +824,15 @@ Value* ASTWhile::Codegen()
 
     BasicBlock *prevBreak = Break;
     BasicBlock *prevContinue = Continue;
-    Continue = loopBB;
+    Continue = endAssnBB;
     Break = afterLoopBB;
     Value* v = block->Codegen();
     Continue = prevContinue;
     Break = prevBreak;
 
+    Builder.CreateBr(endAssnBB);
+    TheFunction->getBasicBlockList().push_back(endAssnBB);
+    Builder.SetInsertPoint(endAssnBB);
     CondV = expr->Codegen();
     if(expr->eval_type == "int")
     {

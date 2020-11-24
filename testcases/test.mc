@@ -11,5 +11,12 @@ int main()
         println(a+b);
         continue;
     }
+    c = 5;
+    while(c)
+    {
+        c = c - 1;
+        continue;
+        println(c);
+    }
     return 0;
 }
