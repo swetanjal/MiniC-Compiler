@@ -571,6 +571,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     }
 
     virtual antlrcpp::Any visitFor(MiniCParser::ForContext *ctx) override {
+        int line = (ctx->start)->getLine();
         ASTFor *node = new ASTFor();
         node->type = "for";
         int c = 0;
@@ -578,7 +579,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->exprs.push_back(visit(ctx->expr(c)));
             c++;
         }
-        
+        if(c != 1)
+        {
+            cout << "Semantic Error on line " << line << ": Expected exactly one condition inside for loop.\n";
+        }
         c = 0;
         while(ctx->assignmentbeg(c) != NULL){
             node->beg_assigns.push_back(visit(ctx->assignmentbeg(c)));

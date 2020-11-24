@@ -754,7 +754,44 @@ Value* ASTPrintln::Codegen()
 }
 Value* ASTFor::Codegen()
 {
-    return nullptr;
+
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *loopBB = BasicBlock::Create(Context, "loop", TheFunction);
+    BasicBlock *afterLoopBB = BasicBlock::Create(Context, "after");
+
+    
+    Value* tmp = nullptr;
+    for(auto assn: beg_assigns)
+        tmp = assn->Codegen();
+    Value* CondV = exprs[0]->Codegen();
+    if(exprs[0]->eval_type == "int")
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "for_cond"); 
+    else if(exprs[0]->eval_type == "bool")
+        CondV = CondV;
+
+    Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
+    Builder.SetInsertPoint(loopBB);
+    Value* v = block->Codegen();
+
+    for(auto assn: assigns)
+    {
+        tmp = assn->Codegen();
+    }
+    CondV = exprs[0]->Codegen();
+    if(exprs[0]->eval_type == "int")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "for_cond"); 
+    }
+    else if(exprs[0]->eval_type == "bool")
+    {
+        CondV = CondV;
+    }
+    Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
+
+    TheFunction->getBasicBlockList().push_back(afterLoopBB);
+    Builder.SetInsertPoint(afterLoopBB);
+
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTWhile::Codegen()
 {
