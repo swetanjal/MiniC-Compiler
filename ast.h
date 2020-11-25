@@ -485,7 +485,28 @@ Value* ASTProg::Codegen()
             
         }
         else{
-            // Process global variables
+            ASTVarDecl* d = (ASTVarDecl*)decl;
+            Type *ty = nullptr;
+            if(d->dat->dtype == "int")
+            {
+                ty = Type::getInt32Ty(Context);
+            }
+            else if(d->dat->dtype == "bool")
+            {
+                ty = Type::getInt1Ty(Context);
+            }
+
+            if(d->id->addrs.size() > 0){
+                // It is an array
+            }
+            else{
+                Value* V_test = TheModule->getNamedGlobal(d->id->name);
+                if(V_test != nullptr){
+                    // This shoud not happen
+                }
+                GlobalVariable *gv = new GlobalVariable(*(TheModule), ty, false, GlobalValue::ExternalLinkage, nullptr, d->id->name);
+                gv->setInitializer(Constant::getNullValue(ty));
+            }
         }
     }
     return V;
@@ -526,7 +547,10 @@ Value* ASTExprTernary::Codegen()
 }
 Value* ASTAssign::Codegen()
 {
-    Builder.CreateStore(expr->Codegen() ,NamedValues[id->name]);
+    if(NamedValues.find(id->name) == NamedValues.end())
+        Builder.CreateStore(expr->Codegen(), TheModule->getNamedGlobal(id->name));
+    else
+        Builder.CreateStore(expr->Codegen() ,NamedValues[id->name]);
     return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTBlock::Codegen()
@@ -547,6 +571,10 @@ Value* ASTBlock::Codegen()
 }
 Value* ASTID::Codegen()
 {
+    if(NamedValues.find(name) == NamedValues.end()){
+        Value* V = TheModule->getNamedGlobal(name);
+        return Builder.CreateLoad(V);
+    }
     return Builder.CreateLoad(NamedValues[name]);
 }
 Value* ASTDecl::Codegen()

@@ -1,74 +1,31 @@
 ; ModuleID = 'MiniC compiler'
 source_filename = "MiniC compiler"
 
-define i32 @sum(i32 %a, i32 %b) {
-entry:
-  %b2 = alloca i32
-  %a1 = alloca i32
-  store i32 %a, i32* %a1
-  store i32 %b, i32* %b2
-  %0 = load i32, i32* %a1
-  %1 = load i32, i32* %b2
-  %add = add i32 %0, %1
-  ret i32 %add
-}
+@a = global i32 0
+@b = global i32 0
 
 define void @main() {
 entry:
-  %c = alloca i32
-  %b = alloca i32
-  %a = alloca i32
-  store i32 3, i32* %a
+  store i32 3, i32* @a
   br label %loop_cond
 
-loop_cond:                                        ; preds = %end_assn3, %entry
-  %0 = load i32, i32* %a
+loop_cond:                                        ; preds = %end_assn, %entry
+  %0 = load i32, i32* @a
   %for_cond = icmp ne i32 %0, 0
-  br i1 %for_cond, label %loop, label %after5
+  br i1 %for_cond, label %loop, label %after
 
 loop:                                             ; preds = %loop_cond
-  store i32 5, i32* %c
-  %1 = load i32, i32* %c
-  %while_cond = icmp ne i32 %1, 0
-  br i1 %while_cond, label %loop1, label %after
-
-loop1:                                            ; preds = %end_assn, %loop
-  %2 = load i32, i32* %c
-  %sub = sub i32 %2, 1
-  store i32 %sub, i32* %c
-  %3 = load i32, i32* %c
-  call void @printlnint(i32 %3)
-  br label %break
-
-break:                                            ; preds = %loop1
-  br label %after
-
-after_break:                                      ; No predecessors!
+  %1 = load i32, i32* @a
+  call void @printlnint(i32 %1)
   br label %end_assn
 
-end_assn:                                         ; preds = %after_break
-  %4 = load i32, i32* %c
-  %while_cond2 = icmp ne i32 %4, 0
-  br i1 %while_cond2, label %loop1, label %after
-
-after:                                            ; preds = %end_assn, %break, %loop
-  br label %continue
-
-continue:                                         ; preds = %after
-  br label %end_assn3
-
-after_continue:                                   ; No predecessors!
-  %5 = load i32, i32* %a
-  call void @printlnint(i32 %5)
-  br label %end_assn3
-
-end_assn3:                                        ; preds = %after_continue, %continue
-  %6 = load i32, i32* %a
-  %sub4 = sub i32 %6, 1
-  store i32 %sub4, i32* %a
+end_assn:                                         ; preds = %loop
+  %2 = load i32, i32* @a
+  %sub = sub i32 %2, 1
+  store i32 %sub, i32* @a
   br label %loop_cond
 
-after5:                                           ; preds = %loop_cond
+after:                                            ; preds = %loop_cond
   ret void
   ret void
 }
