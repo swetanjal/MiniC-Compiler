@@ -3,31 +3,19 @@ source_filename = "MiniC compiler"
 
 @a = global i32 0
 @b = global i32 0
+@A = global [300 x i32] zeroinitializer
 
-define void @main() {
+define i32 @main() {
 entry:
-  store i32 3, i32* @a
-  br label %loop_cond
-
-loop_cond:                                        ; preds = %end_assn, %entry
-  %0 = load i32, i32* @a
-  %for_cond = icmp ne i32 %0, 0
-  br i1 %for_cond, label %loop, label %after
-
-loop:                                             ; preds = %loop_cond
-  %1 = load i32, i32* @a
+  %a = alloca i32
+  store i32 3, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 0)
+  store i32 10, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 1)
+  %0 = load i32, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 0)
+  call void @printlnint(i32 %0)
+  %1 = load i32, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 1)
   call void @printlnint(i32 %1)
-  br label %end_assn
-
-end_assn:                                         ; preds = %loop
-  %2 = load i32, i32* @a
-  %sub = sub i32 %2, 1
-  store i32 %sub, i32* @a
-  br label %loop_cond
-
-after:                                            ; preds = %loop_cond
-  ret void
-  ret void
+  ret i32 3
+  ret i32 2
 }
 
 declare void @printlnint(i32)

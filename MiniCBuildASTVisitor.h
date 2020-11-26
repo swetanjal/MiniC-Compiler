@@ -396,6 +396,14 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             node->val = NULL;
             node->id = visit(ctx->identifier(c));
             
+            if(node->id->addrs.size() > 0 && insideMethod){
+                cout << "Semantic Error on line " << line << ": Arrays need to be declared at a global scope.\n";
+            }
+            for(auto a:node->id->addrs){
+                if(a->type != "int_lit"){
+                    cout << "Semantic Error on line " << line << ": Constant integer literal expected\n";
+                }
+            }
             add(node, line);
 
             vec.push_back(node);
@@ -433,8 +441,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             c++;
         }
         datatype_method = node->return_type->dtype;
+        insideMethod = true;
         node->block = visit(context->block());
         datatype_method = "";
+        insideMethod = false;
         vec.push_back(node);
         parent_table();
         return vec;
@@ -470,7 +480,9 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             c++;
         }
         datatype_method = "void";
+        insideMethod = true;
         node->block = visit(context->block());
+        insideMethod = false;
         datatype_method = "";
         vec.push_back(node);
         parent_table();

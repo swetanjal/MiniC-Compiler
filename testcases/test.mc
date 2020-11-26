@@ -1,8 +1,12 @@
 int a, b;
-void main()
+int A[5][6][10];
+int main()
 {
-    for(a = 3; a; a = a - 1){
-        println(a);
-    }
-    return;
+    int a;
+    A[0][0][0] = 3;
+    A[1][A[0][0][0]][1] = 10;
+    println(A[0][0][0]);
+    println(A[1][3][1]);
+    return 3;
+    return 2;
 }

@@ -460,6 +460,7 @@ class ASTBlock : public ASTnode
 
 BasicBlock *Continue = nullptr;
 BasicBlock *Break = nullptr;
+map < string, vector <int> > array_sizes;
 
 AllocaInst *allocateMemory(Function *TheFunction, string VarName, string type) {
     IRBuilder<> builder(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
@@ -498,6 +499,18 @@ Value* ASTProg::Codegen()
 
             if(d->id->addrs.size() > 0){
                 // It is an array
+                int size = 1;
+                vector <int> tmp_addrs;
+                
+                for(auto add: d->id->addrs){
+                    ASTINTLIT* t = (ASTINTLIT*)(add);
+                    size *= t->value;
+                    tmp_addrs.push_back(t->value);
+                }
+                array_sizes[d->id->name] = tmp_addrs;
+                ArrayType *arrType = ArrayType::get(ty, size);
+                GlobalVariable *gv = new GlobalVariable(*(TheModule), arrType, false, GlobalValue::ExternalLinkage, nullptr, d->id->name);
+                gv->setInitializer(ConstantAggregateZero::get(arrType));
             }
             else{
                 Value* V_test = TheModule->getNamedGlobal(d->id->name);
@@ -547,16 +560,34 @@ Value* ASTExprTernary::Codegen()
 }
 Value* ASTAssign::Codegen()
 {
-    if(NamedValues.find(id->name) == NamedValues.end())
-        Builder.CreateStore(expr->Codegen(), TheModule->getNamedGlobal(id->name));
+    if(NamedValues.find(id->name) == NamedValues.end()){
+        if(id->addrs.size() > 0){
+            // Array element.
+            vector<Value *> array_index;
+            array_index.push_back(Builder.getInt32(0));
+            int l = array_sizes.size();
+            Value* index = Builder.getInt32(0);
+            for(int i = 0; i < l - 1; ++i){
+                index = Builder.CreateAdd(index, Builder.CreateMul(id->addrs[i]->Codegen(), Builder.getInt32(array_sizes[id->name][i]), "mult"));
+            }
+            index = Builder.CreateAdd(index, id->addrs[l - 1]->Codegen());
+            Value *V = TheModule->getNamedGlobal(id->name);
+            array_index.push_back(index);
+            Builder.CreateStore(expr->Codegen(), Builder.CreateGEP(V, array_index, id->name + "_Index"));
+        }
+        else
+            Builder.CreateStore(expr->Codegen(), TheModule->getNamedGlobal(id->name));
+    }
     else
         Builder.CreateStore(expr->Codegen() ,NamedValues[id->name]);
     return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTBlock::Codegen()
 {
+    //map <string, vector <int> > array_sizes_copy;
     map <string, AllocaInst*> NamedValues_copy;
     NamedValues_copy = NamedValues;
+    //array_sizes_copy = array_sizes;
     Value* V;
     for(auto var_decl: var_declarations)
     {
@@ -567,13 +598,31 @@ Value* ASTBlock::Codegen()
         V = statement->Codegen();
     }
     NamedValues = NamedValues_copy;
+    //array_sizes = array_sizes_copy;
     return V;
 }
 Value* ASTID::Codegen()
 {
     if(NamedValues.find(name) == NamedValues.end()){
-        Value* V = TheModule->getNamedGlobal(name);
-        return Builder.CreateLoad(V);
+        if(addrs.size() > 0){
+            // Array
+            vector<Value *> array_index;
+            array_index.push_back(Builder.getInt32(0));
+            int l = array_sizes.size();
+            Value* index = Builder.getInt32(0);
+            for(int i = 0; i < l - 1; ++i){
+                index = Builder.CreateAdd(index, Builder.CreateMul(addrs[i]->Codegen(), Builder.getInt32(array_sizes[name][i]), "mult"));
+            }
+            index = Builder.CreateAdd(index, addrs[l - 1]->Codegen());
+            Value *V = TheModule->getNamedGlobal(name);
+            array_index.push_back(index);
+            return Builder.CreateLoad(Builder.CreateGEP(V, array_index, name + "_Index"));
+        }
+        else{
+            Value* V = TheModule->getNamedGlobal(name);
+            return Builder.CreateLoad(V);
+        }
+        
     }
     return Builder.CreateLoad(NamedValues[name]);
 }
@@ -621,8 +670,10 @@ Value* ASTMethodDecl::Codegen()
 
     Idx = 0;
     
+    //map <string, vector<int> > array_sizes_copy;
     map <string, AllocaInst*> NamedValues_copy;
     NamedValues_copy = NamedValues;
+    //array_sizes_copy = array_sizes;
     for(auto &Arg : F->args())
     {
         AllocaInst *Alloca = allocateMemory(F, args[Idx]->id->name, args[Idx]->dat->dtype);
@@ -635,6 +686,7 @@ Value* ASTMethodDecl::Codegen()
     // Restore symbol table after coming out of function.
     
     NamedValues = NamedValues_copy;
+    //array_sizes = array_sizes_copy;
     if(return_type == NULL)
     {
         Builder.CreateRetVoid();
@@ -650,8 +702,15 @@ Value* ASTVarDecl::Codegen()
 {
     // For the time being support only non arrays.
     Function *TheFunction = Builder.GetInsertBlock()->getParent();
-    AllocaInst *allocaMem = allocateMemory(TheFunction, id->name, dat->dtype);
-    NamedValues[id->name] = allocaMem;
+    if(id->addrs.size() > 0){
+        // It it an array.
+        // Should be caught in semantic analysis phase.
+    }
+    else{
+        AllocaInst *allocaMem = allocateMemory(TheFunction, id->name, dat->dtype);
+        NamedValues[id->name] = allocaMem;
+    }
+    
     return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTStat::Codegen()
