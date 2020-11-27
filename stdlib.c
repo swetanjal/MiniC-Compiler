@@ -1,5 +1,18 @@
 #include <stdio.h>
 #include <stdbool.h>
+
+int float_to_int(float a)
+{
+    return (int)a;
+}
+bool float_to_bool(float a)
+{
+    return (bool)a;
+}
+char float_to_char(float a)
+{
+    return (char)a;
+}
 int readint()
 {
     int a;

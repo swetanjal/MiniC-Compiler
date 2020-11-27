@@ -1,7 +1,7 @@
 int main()
 {
     int i;
-    i =  read_int();
+    i = !false;
     println(i);
     return 0;
 }

@@ -561,6 +561,32 @@ Value* cast(Value* v, string type, string expected)
     }
     if(type == "int" && expected == "float")
         return Builder.CreateSIToFP(v, Type::getFloatTy(Context));
+    if(type == "char" && expected == "bool")
+        return CastInst::CreateIntegerCast(v, Type::getInt1Ty(Context), false, "", Builder.GetInsertBlock());
+    if(type == "int" && expected == "char")
+        return CastInst::CreateIntegerCast(v, Type::getInt8Ty(Context), false, "", Builder.GetInsertBlock());
+    if(type == "int" && expected == "bool")
+        return CastInst::CreateIntegerCast(v, Type::getInt1Ty(Context), false, "", Builder.GetInsertBlock());
+    if(type == "char" && expected == "bool")
+        return CastInst::CreateIntegerCast(v, Type::getInt1Ty(Context), false, "", Builder.GetInsertBlock());        
+    if(type == "float" && expected == "int")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("float_to_int", Builder.getInt32Ty(), Builder.getFloatTy());
+        return Builder.CreateCall(Fn, v);
+    }
+    if(type == "float" && expected == "char")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("float_to_char", Builder.getInt8Ty(), Builder.getFloatTy());
+        return Builder.CreateCall(Fn, v);
+    }
+    if(type == "float" && expected == "bool")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("float_to_bool", Builder.getInt1Ty(), Builder.getFloatTy());
+        return Builder.CreateCall(Fn, v);
+    }
     return v;
 }
 
@@ -1103,11 +1129,16 @@ Value* ASTIFStat::Codegen()
 }
 Value* ASTNot::Codegen()
 {
-    return nullptr;
+    Value* v = expr->Codegen();
+    return Builder.CreateNot(v, "not");
 }
 Value* ASTNeg::Codegen()
 {
-    return nullptr;
+    Value* v = expr->Codegen();
+    if(expr->eval_type == "float")
+        return Builder.CreateFNeg(v, "negation");
+    else
+        return Builder.CreateNeg(v, "negation");
 }
 Value* Inp::Codegen()
 {
@@ -1339,7 +1370,8 @@ Value* ASTReturn::Codegen()
 }
 Value* ASTCast::Codegen()
 {
-    return nullptr;
+    Value *v = expr->Codegen();
+    return cast(v, expr->eval_type, dat->dtype);
 }
 Value* ASTStatAssn::Codegen()
 {
