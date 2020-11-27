@@ -462,21 +462,25 @@ class ASTBlock : public ASTnode
 BasicBlock *Continue = nullptr;
 BasicBlock *Break = nullptr;
 map < string, vector <int> > array_sizes;
-
+map < string, string > types; 
 AllocaInst *allocateMemory(Function *TheFunction, string VarName, string type) {
     IRBuilder<> builder(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     AllocaInst *alloca_instruction = nullptr;
     if (type == "int") {
         alloca_instruction = builder.CreateAlloca(Type::getInt32Ty(Context), 0, VarName);
+        types[VarName] = type;
     } else if (type == "bool") {
         alloca_instruction = builder.CreateAlloca(Type::getInt1Ty(Context), 0, VarName);
+        types[VarName] = type;
     }
     else if(type == "float"){
         alloca_instruction = builder.CreateAlloca(Type::getFloatTy(Context), 0, VarName);
+        types[VarName] = type;
     }
     else if(type == "char")
     {
         alloca_instruction = builder.CreateAlloca(Type::getInt8Ty(Context), 0, VarName);
+        types[VarName] = type;
     }
     return alloca_instruction;
 }
@@ -504,6 +508,12 @@ Value* ASTProg::Codegen()
             {
                 ty = Type::getInt1Ty(Context);
             }
+            else if(d->dat->dtype == "float")
+                ty = Type::getFloatTy(Context);
+            else if(d->dat->dtype == "char")
+                ty = Type::getInt8Ty(Context);
+            
+            types[d->id->name] = d->dat->dtype;
 
             if(d->id->addrs.size() > 0){
                 // It is an array
@@ -660,27 +670,103 @@ Value* ASTExprBinary::Codegen()
             string exp = getCastedType2(left->eval_type, right->eval_type);
             operand1 = cast(operand1, left->eval_type, exp);
             operand2 = cast(operand2, right->eval_type, exp);
-            return Builder.CreateICmpSLT(operand1, operand2, "ltcompare");
+            if(exp == "float")
+                return Builder.CreateFCmpULT(operand1, operand2, "ltcompare");
+            else
+                return Builder.CreateICmpSLT(operand1, operand2, "ltcompare");
         }
         else if(op == "<="){
             string exp = getCastedType2(left->eval_type, right->eval_type);
             operand1 = cast(operand1, left->eval_type, exp);
             operand2 = cast(operand2, right->eval_type, exp);
-            return Builder.CreateICmpSLE(operand1, operand2, "lecompare");
+            if(exp == "float")
+                return Builder.CreateFCmpULE(operand1, operand2, "lecompare");
+            else
+                return Builder.CreateICmpSLE(operand1, operand2, "lecompare");
         }
         else if(op == ">")
         {
             string exp = getCastedType2(left->eval_type, right->eval_type);
             operand1 = cast(operand1, left->eval_type, exp);
             operand2 = cast(operand2, right->eval_type, exp);
-            return Builder.CreateICmpSGT(operand1, operand2, "gecompare");
+            if(exp == "float")
+                return Builder.CreateFCmpUGT(operand1, operand2, "gtcompare");
+            else
+                return Builder.CreateICmpSGT(operand1, operand2, "gtcompare");
         }
         else if(op == ">=")
         {
             string exp = getCastedType2(left->eval_type, right->eval_type);
             operand1 = cast(operand1, left->eval_type, exp);
             operand2 = cast(operand2, right->eval_type, exp);
-            return Builder.CreateICmpSGE(operand1, operand2, "gecompare");
+            if(exp == "float")
+                return Builder.CreateFCmpUGE(operand1, operand2, "gecompare");        
+            else
+                return Builder.CreateICmpSGE(operand1, operand2, "gecompare");
+        }
+        else if(op == "!="){
+            string exp = getCastedType2(left->eval_type, right->eval_type);
+            operand1 = cast(operand1, left->eval_type, exp);
+            operand2 = cast(operand2, right->eval_type, exp);
+            if(exp == "float")
+                return Builder.CreateFCmpUNE(operand1, operand2, "notequalcompare");
+            else
+                return Builder.CreateICmpNE(operand1, operand2, "notequalcompare");
+        }
+        else if(op == "==")
+        {
+            string exp = getCastedType2(left->eval_type, right->eval_type);
+            operand1 = cast(operand1, left->eval_type, exp);
+            operand2 = cast(operand2, right->eval_type, exp);
+            if(exp == "float")
+                return Builder.CreateFCmpUEQ(operand1, operand2, "equalcompare");
+            else
+                return Builder.CreateICmpEQ(operand1, operand2, "equalcompare");
+        }
+        else if(op == "||")
+        {
+            if(left->eval_type == "int")
+                operand1 = Builder.CreateICmpNE(operand1, ConstantInt::get(Context, APInt(32, 0)), "ifcond");
+            else if(left->eval_type == "char")
+                operand1 = Builder.CreateICmpNE(operand1, ConstantInt::get(Context, APInt(8, 0)), "ifcond");                
+            else if(left->eval_type == "bool")
+                operand1 = operand1;
+            else if(left->eval_type == "float")
+                operand1 = Builder.CreateFCmpUNE(operand1, ConstantFP::get(Context, APFloat(0.0)), "ifcond");
+            
+            if(right->eval_type == "int")
+                operand2 = Builder.CreateICmpNE(operand2, ConstantInt::get(Context, APInt(32, 0)), "ifcond");
+            else if(right->eval_type == "char")
+                operand2 = Builder.CreateICmpNE(operand2, ConstantInt::get(Context, APInt(8, 0)), "ifcond");                
+            else if(right->eval_type == "bool")
+                operand2 = operand2;
+            else if(right->eval_type == "float")
+                operand2 = Builder.CreateFCmpUNE(operand2, ConstantFP::get(Context, APFloat(0.0)), "ifcond");
+            
+            
+            return Builder.Insert(BinaryOperator::Create(Instruction::Or, operand1, operand2, "doubleor"));
+        }
+        else if(op == "&&")
+        {
+            if(left->eval_type == "int")
+                operand1 = Builder.CreateICmpNE(operand1, ConstantInt::get(Context, APInt(32, 0)), "ifcond");
+            else if(left->eval_type == "char")
+                operand1 = Builder.CreateICmpNE(operand1, ConstantInt::get(Context, APInt(8, 0)), "ifcond");                
+            else if(left->eval_type == "bool")
+                operand1 = operand1;
+            else if(left->eval_type == "float")
+                operand1 = Builder.CreateFCmpUNE(operand1, ConstantFP::get(Context, APFloat(0.0)), "ifcond");
+            
+            if(right->eval_type == "int")
+                operand2 = Builder.CreateICmpNE(operand2, ConstantInt::get(Context, APInt(32, 0)), "ifcond");
+            else if(right->eval_type == "char")
+                operand2 = Builder.CreateICmpNE(operand2, ConstantInt::get(Context, APInt(8, 0)), "ifcond");                
+            else if(right->eval_type == "bool")
+                operand2 = operand2;
+            else if(right->eval_type == "float")
+                operand2 = Builder.CreateFCmpUNE(operand2, ConstantFP::get(Context, APFloat(0.0)), "ifcond");
+            
+            return Builder.Insert(BinaryOperator::Create(Instruction::And, operand1, operand2, "doubleand"));   
         }
     }
     else if(eval_type == "float")
@@ -741,20 +827,22 @@ Value* ASTAssign::Codegen()
             // index = Builder.CreateAdd(index, addrs[l - 1]->Codegen());
             Value *V = TheModule->getNamedGlobal(id->name);
             array_index.push_back(index);
-            Builder.CreateStore(expr->Codegen(), Builder.CreateGEP(V, array_index, id->name + "_Index"));
+            Builder.CreateStore(cast(expr->Codegen(), expr->eval_type, types[id->name]), Builder.CreateGEP(V, array_index, id->name + "_Index"));
         }
         else
-            Builder.CreateStore(expr->Codegen(), TheModule->getNamedGlobal(id->name));
+            Builder.CreateStore(cast(expr->Codegen(), expr->eval_type, types[id->name]), TheModule->getNamedGlobal(id->name));
     }
     else
-        Builder.CreateStore(expr->Codegen() ,NamedValues[id->name]);
+        Builder.CreateStore(cast(expr->Codegen(), expr->eval_type, types[id->name]) ,NamedValues[id->name]);
     return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTBlock::Codegen()
 {
     //map <string, vector <int> > array_sizes_copy;
     map <string, AllocaInst*> NamedValues_copy;
+    map < string, string > types_copy;
     NamedValues_copy = NamedValues;
+    types_copy = types;
     //array_sizes_copy = array_sizes;
     Value* V;
     for(auto var_decl: var_declarations)
@@ -766,6 +854,7 @@ Value* ASTBlock::Codegen()
         V = statement->Codegen();
     }
     NamedValues = NamedValues_copy;
+    types = types_copy;
     //array_sizes = array_sizes_copy;
     return V;
 }
@@ -858,7 +947,9 @@ Value* ASTMethodDecl::Codegen()
     
     //map <string, vector<int> > array_sizes_copy;
     map <string, AllocaInst*> NamedValues_copy;
+    map < string, string > types_copy;
     NamedValues_copy = NamedValues;
+    types_copy = types;
     //array_sizes_copy = array_sizes;
     for(auto &Arg : F->args())
     {
@@ -872,6 +963,7 @@ Value* ASTMethodDecl::Codegen()
     // Restore symbol table after coming out of function.
     
     NamedValues = NamedValues_copy;
+    types = types_copy;
     //array_sizes = array_sizes_copy;
     if(return_type == NULL)
     {
@@ -975,6 +1067,15 @@ Value* ASTIFStat::Codegen()
     {
         CondV = CondV;
     }
+    else if(expr->eval_type == "float")
+    {
+        CondV = Builder.CreateFCmpUNE(CondV, ConstantFP::get(Context, APFloat(0.0)), "ifcond");
+    }
+    else if(expr->eval_type == "char")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(8, 0)), "ifcond");
+    }
+    
     if(else_block != NULL)
         Builder.CreateCondBr(CondV, ifBlock, elseBlock);
     else
@@ -1010,6 +1111,30 @@ Value* ASTNeg::Codegen()
 }
 Value* Inp::Codegen()
 {
+    if(eval_type == "int")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("readint", Builder.getInt32Ty());
+        return Builder.CreateCall(Fn);
+    }
+    else if(eval_type == "bool")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("readchar", Builder.getInt1Ty());
+        return Builder.CreateCall(Fn);
+    }
+    else if(eval_type == "char")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("readchar", Builder.getInt8Ty());
+        return Builder.CreateCall(Fn);
+    }
+    else if(eval_type == "float")
+    {
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("readfloat", Builder.getFloatTy());
+        return Builder.CreateCall(Fn);
+    }
     return nullptr;
 }
 Value* ASTPrint::Codegen()
@@ -1098,6 +1223,10 @@ Value* ASTFor::Codegen()
         CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "for_cond"); 
     else if(exprs[0]->eval_type == "bool")
         CondV = CondV;
+    else if(exprs[0]->eval_type == "char")
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(8, 0)), "for_cond");
+    else if(exprs[0]->eval_type == "float")
+        CondV = Builder.CreateFCmpUNE(CondV, ConstantFP::get(Context, APFloat(0.0)), "for_cond");
     Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
     
     TheFunction->getBasicBlockList().push_back(loopBB);
@@ -1140,7 +1269,10 @@ Value* ASTWhile::Codegen()
     {
         CondV = CondV;
     }
-
+    else if(expr->eval_type == "char")
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(8, 0)), "for_cond");
+    else if(expr->eval_type == "float")
+        CondV = Builder.CreateFCmpUNE(CondV, ConstantFP::get(Context, APFloat(0.0)), "for_cond");
     Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
     Builder.SetInsertPoint(loopBB);
 
@@ -1164,6 +1296,10 @@ Value* ASTWhile::Codegen()
     {
         CondV = CondV;
     }
+    else if(expr->eval_type == "char")
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(8, 0)), "for_cond");
+    else if(expr->eval_type == "float")
+        CondV = Builder.CreateFCmpUNE(CondV, ConstantFP::get(Context, APFloat(0.0)), "for_cond");
     Builder.CreateCondBr(CondV, loopBB, afterLoopBB);
 
     TheFunction->getBasicBlockList().push_back(afterLoopBB);

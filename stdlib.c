@@ -1,4 +1,34 @@
 #include <stdio.h>
+#include <stdbool.h>
+int readint()
+{
+    int a;
+    scanf("%d", &a);
+    return a;
+}
+
+float readfloat()
+{
+    float a;
+    scanf("%f", &a);
+    return a;
+}
+
+char readchar()
+{
+    char a;
+    scanf("%c", &a);
+    return a;
+}
+
+bool readbool()
+{
+    int tmp;
+    bool a;
+    scanf("%d", &tmp);
+    a = (bool)tmp;
+    return a;
+}
 
 void printint(int a)
 {

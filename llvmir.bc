@@ -1,19 +1,16 @@
 ; ModuleID = 'MiniC compiler'
 source_filename = "MiniC compiler"
 
-@a = global i32 0
-@b = global i32 0
-@A = global [300 x i32] zeroinitializer
-
 define i32 @main() {
 entry:
-  %a = alloca i1
-  %0 = zext i8 97 to i32
-  %gecompare = icmp sge i32 3, %0
-  store i1 %gecompare, i1* %a
-  %1 = load i1, i1* %a
-  call void @printlnbool(i1 %1)
+  %i = alloca i32
+  %0 = call i32 @readint()
+  store i32 %0, i32* %i
+  %1 = load i32, i32* %i
+  call void @printlnint(i32 %1)
   ret i32 0
 }
 
-declare void @printlnbool(i1)
+declare i32 @readint()
+
+declare void @printlnint(i32)
