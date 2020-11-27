@@ -463,6 +463,7 @@ BasicBlock *Continue = nullptr;
 BasicBlock *Break = nullptr;
 map < string, vector <int> > array_sizes;
 map < string, string > types; 
+int required_extra_block = 0;
 AllocaInst *allocateMemory(Function *TheFunction, string VarName, string type) {
     IRBuilder<> builder(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     AllocaInst *alloca_instruction = nullptr;
@@ -1110,16 +1111,18 @@ Value* ASTIFStat::Codegen()
         Builder.CreateCondBr(CondV, ifBlock, MergeBB);
     
     Builder.SetInsertPoint(ifBlock);
+    required_extra_block += 1;
     Value *ThenV = if_block->Codegen();
+    required_extra_block -= 1;
     Builder.CreateBr(MergeBB);
     ifBlock = Builder.GetInsertBlock();
 
     if(else_block != NULL){
         TheFunction->getBasicBlockList().push_back(elseBlock);
         Builder.SetInsertPoint(elseBlock);
-
+        required_extra_block += 1;
         Value *ElseV = else_block->Codegen();
-    
+        required_extra_block -= 1;
         Builder.CreateBr(MergeBB);
         // codegen of 'Else' can change the current block, update ElseBB for the PHI.
         elseBlock = Builder.GetInsertBlock();
@@ -1269,7 +1272,9 @@ Value* ASTFor::Codegen()
     BasicBlock *prevContinue = Continue;
     Continue = endAssnBB;
     Break = afterLoopBB;
+    required_extra_block += 1;
     Value* v = block->Codegen();
+    required_extra_block -= 1;
     Continue = prevContinue;
     Break = prevBreak;
     
@@ -1313,7 +1318,9 @@ Value* ASTWhile::Codegen()
     BasicBlock *prevContinue = Continue;
     Continue = endAssnBB;
     Break = afterLoopBB;
+    required_extra_block += 1;
     Value* v = block->Codegen();
+    required_extra_block -= 1;
     Continue = prevContinue;
     Break = prevBreak;
 
@@ -1366,9 +1373,23 @@ Value* ASTContinue::Codegen()
 }
 Value* ASTReturn::Codegen()
 {
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *returnBB = BasicBlock::Create(Context, "return", TheFunction);
+    BasicBlock *afterReturn = BasicBlock::Create(Context, "after_return");
+    Builder.CreateBr(returnBB);
+    Builder.SetInsertPoint(returnBB);
+    
     if(expr == NULL)
-        return Builder.CreateRetVoid();
-    return Builder.CreateRet(expr->Codegen());
+        Builder.CreateRetVoid();
+    else
+        Builder.CreateRet(expr->Codegen());
+
+    if(required_extra_block > 0){
+        TheFunction->getBasicBlockList().push_back(afterReturn);
+        Builder.SetInsertPoint(afterReturn);
+    }
+    
+    return ConstantInt::get(Context, APInt(32, 1));
 }
 Value* ASTCast::Codegen()
 {

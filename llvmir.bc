@@ -4,11 +4,33 @@ source_filename = "MiniC compiler"
 define i32 @main() {
 entry:
   %i = alloca i32
-  %0 = zext i1 true to i32
-  store i32 %0, i32* %i
-  %1 = load i32, i32* %i
-  call void @printlnint(i32 %1)
-  ret i32 0
-}
+  store i32 1, i32* %i
+  %0 = load i32, i32* %i
+  %gtcompare = icmp sgt i32 %0, 0
+  br i1 %gtcompare, label %loop, label %after
 
-declare void @printlnint(i32)
+loop:                                             ; preds = %end_assn, %entry
+  br label %return
+
+return:                                           ; preds = %loop
+  ret i32 5
+
+after_return:                                     ; No predecessors!
+  %1 = load i32, i32* %i
+  %sub = sub i32 %1, 1
+  store i32 %sub, i32* %i
+  br label %end_assn
+
+end_assn:                                         ; preds = %after_return
+  %2 = load i32, i32* %i
+  %gtcompare1 = icmp sgt i32 %2, 0
+  br i1 %gtcompare1, label %loop, label %after
+
+after:                                            ; preds = %end_assn, %entry
+  br label %return2
+
+return2:                                          ; preds = %after
+  ret i32 0
+
+after_return3:                                    ; No predecessors!
+}
