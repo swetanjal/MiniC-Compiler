@@ -1057,6 +1057,8 @@ Value* ASTCHARLIT::Codegen()
         return ConstantInt::get(Context, APInt(8, (int)(10)));
     else if(value[2] == 't')
         return ConstantInt::get(Context, APInt(8, (int)(9)));
+    else if(value[2] == '0')
+        return ConstantInt::get(Context, APInt(8, (int)(0)));
 }
 Value* ASTExprCall::Codegen()
 {

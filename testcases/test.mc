@@ -1,7 +1,7 @@
 int main()
 {
     int i;
-    i = !false;
+    i = '\0' == '\0';
     println(i);
     return 0;
 }
