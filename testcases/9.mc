@@ -1,6 +1,5 @@
 int A[1000][1000];
 int B[1000][1000];
-int res[1000][1000];
 int main()
 {
     int N, M, i, j;
@@ -13,16 +12,21 @@ int main()
             A[i][j] = read_int();
         }
     }
-
     for(i = 0; i < N; i = i + 1)
     {
         for(j = 0; j < M; j = j + 1)
         {
             B[i][j] = read_int();
-            res[i][j] = A[i][j] + B[i][j];
-            print(res[i][j]);
-            print(" ");
         }
-        println("");
+    }   
+    for(i = 0; i < N; i = i + 1)
+    {
+        for(j = 0; j < M; j = j + 1)
+        {
+            print(A[i][j] + B[i][j]);
+            print(' ');
+        }
+        print('\n');
     }
+    return 0;
 }

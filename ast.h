@@ -842,7 +842,7 @@ Value* ASTAssign::Codegen()
             // Array element.
             vector<Value *> array_index;
             array_index.push_back(Builder.getInt32(0));
-            int l = array_sizes.size();
+            int l = array_sizes[id->name].size();
             Value* index = Builder.getInt32(0);
             for(int i = 0; i < l; ++i){
                 Value *factor = id->addrs[i]->Codegen();
@@ -892,7 +892,7 @@ Value* ASTID::Codegen()
             // Array
             vector<Value *> array_index;
             array_index.push_back(Builder.getInt32(0));
-            int l = array_sizes.size();
+            int l = array_sizes[name].size();
             Value* index = Builder.getInt32(0);
             for(int i = 0; i < l; ++i){
                 Value *factor = addrs[i]->Codegen();

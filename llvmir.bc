@@ -1,36 +1,190 @@
 ; ModuleID = 'MiniC compiler'
 source_filename = "MiniC compiler"
 
+@A = global [1000000 x i32] zeroinitializer
+@B = global [1000000 x i32] zeroinitializer
+@res = global [1000000 x i32] zeroinitializer
+
 define i32 @main() {
 entry:
+  %j = alloca i32
   %i = alloca i32
-  store i32 1, i32* %i
-  %0 = load i32, i32* %i
-  %gtcompare = icmp sgt i32 %0, 0
-  br i1 %gtcompare, label %loop, label %after
+  %M = alloca i32
+  %N = alloca i32
+  %0 = call i32 @readint()
+  store i32 %0, i32* %N
+  %1 = call i32 @readint()
+  store i32 %1, i32* %M
+  store i32 0, i32* %i
+  br label %loop_cond
 
-loop:                                             ; preds = %end_assn, %entry
-  br label %return
+loop_cond:                                        ; preds = %end_assn4, %entry
+  %2 = load i32, i32* %i
+  %3 = load i32, i32* %N
+  %ltcompare = icmp slt i32 %2, %3
+  br i1 %ltcompare, label %loop, label %after6
 
-return:                                           ; preds = %loop
-  ret i32 5
+loop:                                             ; preds = %loop_cond
+  store i32 0, i32* %j
+  br label %loop_cond1
 
-after_return:                                     ; No predecessors!
-  %1 = load i32, i32* %i
-  %sub = sub i32 %1, 1
-  store i32 %sub, i32* %i
+loop_cond1:                                       ; preds = %end_assn, %loop
+  %4 = load i32, i32* %j
+  %5 = load i32, i32* %M
+  %ltcompare2 = icmp slt i32 %4, %5
+  br i1 %ltcompare2, label %loop3, label %after
+
+loop3:                                            ; preds = %loop_cond1
+  %6 = load i32, i32* %i
+  %7 = mul i32 %6, 1000
+  %8 = add i32 0, %7
+  %9 = load i32, i32* %j
+  %10 = add i32 %8, %9
+  %A_Index = getelementptr [1000000 x i32], [1000000 x i32]* @A, i32 0, i32 %10
+  %11 = call i32 @readint()
+  store i32 %11, i32* %A_Index
   br label %end_assn
 
-end_assn:                                         ; preds = %after_return
-  %2 = load i32, i32* %i
-  %gtcompare1 = icmp sgt i32 %2, 0
-  br i1 %gtcompare1, label %loop, label %after
+end_assn:                                         ; preds = %loop3
+  %12 = load i32, i32* %j
+  %add = add i32 %12, 1
+  store i32 %add, i32* %j
+  br label %loop_cond1
 
-after:                                            ; preds = %end_assn, %entry
-  br label %return2
+after:                                            ; preds = %loop_cond1
+  br label %end_assn4
 
-return2:                                          ; preds = %after
+end_assn4:                                        ; preds = %after
+  %13 = load i32, i32* %i
+  %add5 = add i32 %13, 1
+  store i32 %add5, i32* %i
+  br label %loop_cond
+
+after6:                                           ; preds = %loop_cond
+  store i32 0, i32* %i
+  br label %loop_cond7
+
+loop_cond7:                                       ; preds = %end_assn16, %after6
+  %14 = load i32, i32* %i
+  %15 = load i32, i32* %N
+  %ltcompare8 = icmp slt i32 %14, %15
+  br i1 %ltcompare8, label %loop9, label %after18
+
+loop9:                                            ; preds = %loop_cond7
+  store i32 0, i32* %j
+  br label %loop_cond10
+
+loop_cond10:                                      ; preds = %end_assn13, %loop9
+  %16 = load i32, i32* %j
+  %17 = load i32, i32* %M
+  %ltcompare11 = icmp slt i32 %16, %17
+  br i1 %ltcompare11, label %loop12, label %after15
+
+loop12:                                           ; preds = %loop_cond10
+  %18 = load i32, i32* %i
+  %19 = mul i32 %18, 1000
+  %20 = add i32 0, %19
+  %21 = load i32, i32* %j
+  %22 = add i32 %20, %21
+  %B_Index = getelementptr [1000000 x i32], [1000000 x i32]* @B, i32 0, i32 %22
+  %23 = call i32 @readint()
+  store i32 %23, i32* %B_Index
+  br label %end_assn13
+
+end_assn13:                                       ; preds = %loop12
+  %24 = load i32, i32* %j
+  %add14 = add i32 %24, 1
+  store i32 %add14, i32* %j
+  br label %loop_cond10
+
+after15:                                          ; preds = %loop_cond10
+  br label %end_assn16
+
+end_assn16:                                       ; preds = %after15
+  %25 = load i32, i32* %i
+  %add17 = add i32 %25, 1
+  store i32 %add17, i32* %i
+  br label %loop_cond7
+
+after18:                                          ; preds = %loop_cond7
+  store i32 0, i32* %i
+  br label %loop_cond19
+
+loop_cond19:                                      ; preds = %end_assn32, %after18
+  %26 = load i32, i32* %i
+  %27 = load i32, i32* %N
+  %ltcompare20 = icmp slt i32 %26, %27
+  br i1 %ltcompare20, label %loop21, label %after34
+
+loop21:                                           ; preds = %loop_cond19
+  store i32 0, i32* %j
+  br label %loop_cond22
+
+loop_cond22:                                      ; preds = %end_assn29, %loop21
+  %28 = load i32, i32* %j
+  %29 = load i32, i32* %M
+  %ltcompare23 = icmp slt i32 %28, %29
+  br i1 %ltcompare23, label %loop24, label %after31
+
+loop24:                                           ; preds = %loop_cond22
+  %30 = load i32, i32* %i
+  %31 = mul i32 %30, 1000
+  %32 = add i32 0, %31
+  %33 = load i32, i32* %j
+  %34 = add i32 %32, %33
+  %res_Index = getelementptr [1000000 x i32], [1000000 x i32]* @res, i32 0, i32 %34
+  %35 = load i32, i32* %i
+  %36 = mul i32 %35, 1000
+  %37 = add i32 0, %36
+  %38 = load i32, i32* %j
+  %39 = add i32 %37, %38
+  %A_Index25 = getelementptr [1000000 x i32], [1000000 x i32]* @A, i32 0, i32 %39
+  %40 = load i32, i32* %A_Index25
+  %41 = load i32, i32* %i
+  %42 = mul i32 %41, 1000
+  %43 = add i32 0, %42
+  %44 = load i32, i32* %j
+  %45 = add i32 %43, %44
+  %B_Index26 = getelementptr [1000000 x i32], [1000000 x i32]* @B, i32 0, i32 %45
+  %46 = load i32, i32* %B_Index26
+  %add27 = add i32 %40, %46
+  store i32 %add27, i32* %res_Index
+  %47 = load i32, i32* %i
+  %48 = mul i32 %47, 1000
+  %49 = add i32 0, %48
+  %50 = load i32, i32* %j
+  %51 = add i32 %49, %50
+  %res_Index28 = getelementptr [1000000 x i32], [1000000 x i32]* @res, i32 0, i32 %51
+  %52 = load i32, i32* %res_Index28
+  call void @printint(i32 %52)
+  call void @printchar(i8 32)
+  br label %end_assn29
+
+end_assn29:                                       ; preds = %loop24
+  %53 = load i32, i32* %j
+  %add30 = add i32 %53, 1
+  store i32 %add30, i32* %j
+  br label %loop_cond22
+
+after31:                                          ; preds = %loop_cond22
+  call void @printchar(i8 10)
+  br label %end_assn32
+
+end_assn32:                                       ; preds = %after31
+  %54 = load i32, i32* %i
+  %add33 = add i32 %54, 1
+  store i32 %add33, i32* %i
+  br label %loop_cond19
+
+after34:                                          ; preds = %loop_cond19
+  br label %return
+
+return:                                           ; preds = %after34
   ret i32 0
-
-after_return3:                                    ; No predecessors!
 }
+
+declare i32 @readint()
+
+declare void @printint(i32)
+
+declare void @printchar(i8)
