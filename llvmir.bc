@@ -7,15 +7,13 @@ source_filename = "MiniC compiler"
 
 define i32 @main() {
 entry:
-  %a = alloca i32
-  store i32 3, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 0)
-  store i32 10, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 1)
-  %0 = load i32, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 0)
-  call void @printlnint(i32 %0)
-  %1 = load i32, i32* getelementptr inbounds ([300 x i32], [300 x i32]* @A, i32 0, i32 1)
-  call void @printlnint(i32 %1)
-  ret i32 3
-  ret i32 2
+  %a = alloca i1
+  %0 = zext i8 97 to i32
+  %gecompare = icmp sge i32 3, %0
+  store i1 %gecompare, i1* %a
+  %1 = load i1, i1* %a
+  call void @printlnbool(i1 %1)
+  ret i32 0
 }
 
-declare void @printlnint(i32)
+declare void @printlnbool(i1)

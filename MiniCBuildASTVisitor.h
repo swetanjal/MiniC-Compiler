@@ -226,11 +226,11 @@ string addSubMulDivCompatible(string a)
     if(a == "string")
         return "";
     if(a == "char")
-        return "int";
+        return "char";
     if(a == "unit")
         return "int";
     if(a == "bool")
-        return "int";
+        return "bool";
     if(a == "file")
         return "";
     return "";

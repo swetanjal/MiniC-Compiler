@@ -10,6 +10,7 @@
 #include <llvm/IR/CallingConv.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/IR/IRBuilder.h>
+#include "llvm/IR/InstrTypes.h"
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 // #include <llvm/ExecutionEngine/MCJIT.h>
@@ -470,6 +471,13 @@ AllocaInst *allocateMemory(Function *TheFunction, string VarName, string type) {
     } else if (type == "bool") {
         alloca_instruction = builder.CreateAlloca(Type::getInt1Ty(Context), 0, VarName);
     }
+    else if(type == "float"){
+        alloca_instruction = builder.CreateAlloca(Type::getFloatTy(Context), 0, VarName);
+    }
+    else if(type == "char")
+    {
+        alloca_instruction = builder.CreateAlloca(Type::getInt8Ty(Context), 0, VarName);
+    }
     return alloca_instruction;
 }
 
@@ -528,29 +536,185 @@ Value* ASTExpr::Codegen()
 {
     return nullptr;
 }
+
+Value* cast(Value* v, string type, string expected)
+{
+    if(type == expected)
+        return v;
+    if(type == "bool" && expected == "char")
+        return CastInst::CreateIntegerCast(v, Type::getInt8Ty(Context), false, "", Builder.GetInsertBlock());
+    if((type == "char" || type == "bool") && expected == "int")
+        return CastInst::CreateIntegerCast(v, Type::getInt32Ty(Context), false, "", Builder.GetInsertBlock());
+    if((type == "char" || type == "bool") && expected == "float"){
+        return Builder.CreateUIToFP(v, Type::getFloatTy(Context));
+        // return CastInst::CreateIntegerCast(v, Type::getFloatTy(Context), true, "", Builder.GetInsertBlock());
+    }
+    if(type == "int" && expected == "float")
+        return Builder.CreateSIToFP(v, Type::getFloatTy(Context));
+    return v;
+}
+
+int getKey2(string x)
+{
+    if(x == "bool")
+        return 0;
+    if(x == "char")
+        return 1;
+    if(x == "unint")
+        return 2;
+    if(x == "int")
+        return 3;
+    if(x == "float")
+        return 4;
+    if(x == "string")
+        return 5;
+    if(x == "file")
+        return 6;
+    return -1;
+}
+
+string getTypeString2(int v)
+{
+    if(v == 0)
+        return "bool";
+    if(v == 1)
+        return "char";
+    if(v == 2)
+        return "uint";
+    if(v == 3)
+        return "int";
+    if(v == 4)
+        return "float";
+    if(v == 5)
+        return "string";
+    if(v == 6)
+        return "file";
+    return "";
+}
+
+string getCastedType2(string a, string b)
+{
+    int x = getKey2(a);
+    int y = getKey2(b);
+
+    int t1 = min(x, y);
+    int t2 = max(x, y);
+    if(t1 == -1)
+        return "";
+    //if(t1 == 1 && t2 == 5)
+    //    return getTypeString(t2);
+    if(t2 == 5)
+        return getTypeString2(t2);
+
+    if((t1 == 5 || t2 == 5 || t1 == 6 || t2 == 6) && (t1 != t2))
+        return "";
+
+    return getTypeString2(t2); 
+
+    //if(a == "bool" && b == "int")
+    //    return "int";
+    //if(a == "bool" && b == "float")
+    //    return "float";
+    //if(a == "bool" && )
+}
+
+
 Value* ASTExprBinary::Codegen()
 {
     Value* operand1 = left->Codegen();
     Value* operand2 = right->Codegen();
-    if(op == "+")
-    {
-        return Builder.CreateAdd(operand1, operand2, "add");
+    
+
+    if(eval_type == "int" || eval_type == "char" || eval_type == "bool"){
+        if(op == "+")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateAdd(operand1, operand2, "add");
+        }
+        else if(op == "-")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateSub(operand1, operand2, "sub");
+        }
+        else if(op == "*")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateMul(operand1, operand2, "mult");
+        }
+        else if(op == "/")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateSDiv(operand1, operand2, "div");
+        }
+        else if(op == "%")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateSRem(operand1, operand2, "mod");
+        }
+        else if(op == "<"){
+            string exp = getCastedType2(left->eval_type, right->eval_type);
+            operand1 = cast(operand1, left->eval_type, exp);
+            operand2 = cast(operand2, right->eval_type, exp);
+            return Builder.CreateICmpSLT(operand1, operand2, "ltcompare");
+        }
+        else if(op == "<="){
+            string exp = getCastedType2(left->eval_type, right->eval_type);
+            operand1 = cast(operand1, left->eval_type, exp);
+            operand2 = cast(operand2, right->eval_type, exp);
+            return Builder.CreateICmpSLE(operand1, operand2, "lecompare");
+        }
+        else if(op == ">")
+        {
+            string exp = getCastedType2(left->eval_type, right->eval_type);
+            operand1 = cast(operand1, left->eval_type, exp);
+            operand2 = cast(operand2, right->eval_type, exp);
+            return Builder.CreateICmpSGT(operand1, operand2, "gecompare");
+        }
+        else if(op == ">=")
+        {
+            string exp = getCastedType2(left->eval_type, right->eval_type);
+            operand1 = cast(operand1, left->eval_type, exp);
+            operand2 = cast(operand2, right->eval_type, exp);
+            return Builder.CreateICmpSGE(operand1, operand2, "gecompare");
+        }
     }
-    else if(op == "-")
+    else if(eval_type == "float")
     {
-        return Builder.CreateSub(operand1, operand2, "sub");
-    }
-    else if(op == "*")
-    {
-        return Builder.CreateMul(operand1, operand2, "mult");
-    }
-    else if(op == "/")
-    {
-        return Builder.CreateSDiv(operand1, operand2, "div");
-    }
-    else if(op == "%")
-    {
-        return Builder.CreateSRem(operand1, operand2, "mod");
+        if(op == "+")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateFAdd(operand1, operand2, "add");
+        }
+        else if(op == "-")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateFSub(operand1, operand2, "sub");
+        }
+        else if(op == "*")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateFMul(operand1, operand2, "mult");
+        }
+        else if(op == "/")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateFDiv(operand1, operand2, "div");
+        }
+        else if(op == "%")
+        {
+            operand1 = cast(operand1, left->eval_type, eval_type);
+            operand2 = cast(operand2, right->eval_type, eval_type);
+            return Builder.CreateFRem(operand1, operand2, "mod");
+        }
     }
     return nullptr;
 }
@@ -567,10 +731,14 @@ Value* ASTAssign::Codegen()
             array_index.push_back(Builder.getInt32(0));
             int l = array_sizes.size();
             Value* index = Builder.getInt32(0);
-            for(int i = 0; i < l - 1; ++i){
-                index = Builder.CreateAdd(index, Builder.CreateMul(id->addrs[i]->Codegen(), Builder.getInt32(array_sizes[id->name][i]), "mult"));
+            for(int i = 0; i < l; ++i){
+                Value *factor = id->addrs[i]->Codegen();
+                for(int j = i + 1; j < l; ++j){
+                    factor = Builder.CreateMul(factor, Builder.getInt32(array_sizes[id->name][j]));
+                }
+                index = Builder.CreateAdd(index, factor);
             }
-            index = Builder.CreateAdd(index, id->addrs[l - 1]->Codegen());
+            // index = Builder.CreateAdd(index, addrs[l - 1]->Codegen());
             Value *V = TheModule->getNamedGlobal(id->name);
             array_index.push_back(index);
             Builder.CreateStore(expr->Codegen(), Builder.CreateGEP(V, array_index, id->name + "_Index"));
@@ -610,10 +778,14 @@ Value* ASTID::Codegen()
             array_index.push_back(Builder.getInt32(0));
             int l = array_sizes.size();
             Value* index = Builder.getInt32(0);
-            for(int i = 0; i < l - 1; ++i){
-                index = Builder.CreateAdd(index, Builder.CreateMul(addrs[i]->Codegen(), Builder.getInt32(array_sizes[name][i]), "mult"));
+            for(int i = 0; i < l; ++i){
+                Value *factor = addrs[i]->Codegen();
+                for(int j = i + 1; j < l; ++j){
+                    factor = Builder.CreateMul(factor, Builder.getInt32(array_sizes[name][j]));
+                }
+                index = Builder.CreateAdd(index, factor);
             }
-            index = Builder.CreateAdd(index, addrs[l - 1]->Codegen());
+            // index = Builder.CreateAdd(index, addrs[l - 1]->Codegen());
             Value *V = TheModule->getNamedGlobal(name);
             array_index.push_back(index);
             return Builder.CreateLoad(Builder.CreateGEP(V, array_index, name + "_Index"));
@@ -646,6 +818,14 @@ Value* ASTMethodDecl::Codegen()
     {
         ret_type = Type::getInt1Ty(Context);
     }
+    else if(return_type->dtype == "char")
+    {
+        ret_type = Type::getInt8Ty(Context);
+    }
+    else if(return_type->dtype == "float")
+    {
+        ret_type = Type::getFloatTy(Context);
+    }
     std::vector<Type*> arguments;
     for(auto param: args)
     {
@@ -656,6 +836,12 @@ Value* ASTMethodDecl::Codegen()
         else if(param->dat->dtype == "bool")
         {
             arguments.push_back(Type::getInt1Ty(Context));
+        }
+        else if(param->dat->dtype == "char"){
+            arguments.push_back(Type::getInt32Ty(Context));
+        }
+        else if(param->dat->dtype == "float"){
+            arguments.push_back(Type::getFloatTy(Context));
         }
     }
     FunctionType *FT = FunctionType::get(ret_type, arguments, false);
@@ -727,7 +913,7 @@ Value* ASTINTLIT::Codegen()
 }
 Value* ASTFLOATLIT::Codegen()
 {
-    return nullptr;
+    return ConstantFP::get(Context, APFloat(value));
 }
 Value* ASTSTRINGLIT::Codegen()
 {
@@ -747,7 +933,12 @@ Value* ASTBOOLLIT::Codegen()
 }
 Value* ASTCHARLIT::Codegen()
 {
-    return nullptr;
+    if(value.size() == 3)
+        return ConstantInt::get(Context, APInt(8, (int)(value[1])));
+    else if(value[2] == 'n')
+        return ConstantInt::get(Context, APInt(8, (int)(10)));
+    else if(value[2] == 't')
+        return ConstantInt::get(Context, APInt(8, (int)(9)));
 }
 Value* ASTExprCall::Codegen()
 {
@@ -830,6 +1021,28 @@ Value* ASTPrint::Codegen()
         auto Fn = M->getOrInsertFunction("printint", Builder.getVoidTy(), Int32Ty);
         return Builder.CreateCall(Fn, Version);
     }
+    else if(expr->eval_type == "bool"){
+        Value* Version = expr->Codegen();
+        auto Int1Ty = Builder.getInt1Ty();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printbool", Builder.getVoidTy(), Int1Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
+    else if(expr->eval_type == "char"){
+        Value* Version = expr->Codegen();
+        auto Int8Ty = Builder.getInt8Ty();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printchar", Builder.getVoidTy(), Int8Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
+    else if(expr->eval_type == "float")
+    {
+        Value* Version = expr->Codegen();
+        auto FloatTy = Builder.getFloatTy();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printfloat", Builder.getVoidTy(), FloatTy);
+        return Builder.CreateCall(Fn, Version);
+    }
 }
 Value* ASTPrintln::Codegen()
 {
@@ -838,6 +1051,28 @@ Value* ASTPrintln::Codegen()
         auto Int32Ty = Builder.getInt32Ty();
         auto M = Builder.GetInsertBlock()->getModule();
         auto Fn = M->getOrInsertFunction("printlnint", Builder.getVoidTy(), Int32Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
+    else if(expr->eval_type == "bool"){
+        Value* Version = expr->Codegen();
+        auto Int1Ty = Builder.getInt1Ty();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printlnbool", Builder.getVoidTy(), Int1Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
+    else if(expr->eval_type == "char"){
+        Value* Version = expr->Codegen();
+        auto Int8Ty = Builder.getInt8Ty();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printlnchar", Builder.getVoidTy(), Int8Ty);
+        return Builder.CreateCall(Fn, Version);
+    }
+    else if(expr->eval_type == "float")
+    {
+        Value* Version = expr->Codegen();
+        auto FloatTy = Builder.getFloatTy();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printlnfloat", Builder.getVoidTy(), FloatTy);
         return Builder.CreateCall(Fn, Version);
     }
     return nullptr;
