@@ -1,4 +1,4 @@
-./MiniC testcases/test.mc
+./MiniC $1
 clang -emit-llvm -c -g stdlib.c
 llvm-link llvmir.bc stdlib.bc -o a.bc
 lli a.bc
