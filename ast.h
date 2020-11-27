@@ -1074,7 +1074,7 @@ Value* ASTExprCall::Codegen()
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
         ArgsV.push_back(args[i]->Codegen());
     }
-    return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
+    return Builder.CreateCall(CalleeF, ArgsV);
 }
 Value* ASTStatCall::Codegen()
 {
