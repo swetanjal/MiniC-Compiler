@@ -10,6 +10,8 @@ int fact(int m)
 
 int main()
 {
-    fact(5);   
+    int N;
+    N = read_int();
+    println(fact(N));   
     return 0;
 }

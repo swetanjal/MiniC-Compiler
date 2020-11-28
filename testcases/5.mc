@@ -8,9 +8,9 @@ void permute(int l, int r)
         for(i = 0; i < N; i = i + 1)
         {
             print(A[i]);
-            print(" ");
+            print(' ');
         }
-        println("");
+        print('\n');
     } 
     else
     {  

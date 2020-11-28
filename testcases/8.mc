@@ -1,9 +1,9 @@
 int A[1000000];
-
+int tmp[1000000];
 void sort(int l, int r)
 {
     int i;
-    int sz, mid, tmp[r - l + 1], l_ptr, r_ptr, c;
+    int sz, mid, l_ptr, r_ptr, c;
     sz = r - l + 1;
     if(sz == 1)
     {
@@ -57,7 +57,8 @@ int main()
     sort(0, N - 1);    
     for(i = 0; i < N; i = i + 1){
         print(A[i]);
-        print(" ");
+        print(' ');
     }
+    print('\n');
     return 0;
 }

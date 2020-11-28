@@ -25,6 +25,6 @@ int main()
             sum = sum + i;
         }
     }
-    print(sum);
+    println(sum);
     return 0;
 }
