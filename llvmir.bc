@@ -1,155 +1,33 @@
 ; ModuleID = 'MiniC compiler'
 source_filename = "MiniC compiler"
 
-@A = global [1000 x i32] zeroinitializer
-@N = global i32 0
-
-define void @insertionSort() {
-entry:
-  %j = alloca i32
-  %key = alloca i32
-  %i = alloca i32
-  store i32 1, i32* %i
-  br label %loop_cond
-
-loop_cond:                                        ; preds = %end_assn11, %entry
-  %0 = load i32, i32* %i
-  %1 = load i32, i32* @N
-  %ltcompare = icmp slt i32 %0, %1
-  br i1 %ltcompare, label %loop, label %after13
-
-loop:                                             ; preds = %loop_cond
-  %2 = load i32, i32* %i
-  %3 = add i32 0, %2
-  %A_Index = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %3
-  %4 = load i32, i32* %A_Index
-  store i32 %4, i32* %key
-  %5 = load i32, i32* %i
-  %sub = sub i32 %5, 1
-  store i32 %sub, i32* %j
-  %6 = load i32, i32* %j
-  %gecompare = icmp sge i32 %6, 0
-  %7 = load i32, i32* %j
-  %8 = add i32 0, %7
-  %A_Index2 = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %8
-  %9 = load i32, i32* %A_Index2
-  %10 = load i32, i32* %key
-  %gtcompare = icmp sgt i32 %9, %10
-  %11 = and i1 %gecompare, %gtcompare
-  br i1 %11, label %loop1, label %after
-
-loop1:                                            ; preds = %end_assn, %loop
-  %12 = load i32, i32* %j
-  %add = add i32 %12, 1
-  %13 = add i32 0, %add
-  %A_Index3 = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %13
-  %14 = load i32, i32* %j
-  %15 = add i32 0, %14
-  %A_Index4 = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %15
-  %16 = load i32, i32* %A_Index4
-  store i32 %16, i32* %A_Index3
-  %17 = load i32, i32* %j
-  %sub5 = sub i32 %17, 1
-  store i32 %sub5, i32* %j
-  br label %end_assn
-
-end_assn:                                         ; preds = %loop1
-  %18 = load i32, i32* %j
-  %gecompare6 = icmp sge i32 %18, 0
-  %19 = load i32, i32* %j
-  %20 = add i32 0, %19
-  %A_Index7 = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %20
-  %21 = load i32, i32* %A_Index7
-  %22 = load i32, i32* %key
-  %gtcompare8 = icmp sgt i32 %21, %22
-  %23 = and i1 %gecompare6, %gtcompare8
-  br i1 %23, label %loop1, label %after
-
-after:                                            ; preds = %end_assn, %loop
-  %24 = load i32, i32* %j
-  %add9 = add i32 %24, 1
-  %25 = add i32 0, %add9
-  %A_Index10 = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %25
-  %26 = load i32, i32* %key
-  store i32 %26, i32* %A_Index10
-  br label %end_assn11
-
-end_assn11:                                       ; preds = %after
-  %27 = load i32, i32* %i
-  %add12 = add i32 %27, 1
-  store i32 %add12, i32* %i
-  br label %loop_cond
-
-after13:                                          ; preds = %loop_cond
-  ret void
-}
-
 define i32 @main() {
 entry:
-  %i = alloca i32
+  %N = alloca i32
   %0 = call i32 @readint()
-  store i32 %0, i32* @N
-  store i32 0, i32* %i
-  br label %loop_cond
+  store i32 %0, i32* %N
+  %1 = load i32, i32* %N
+  %gtcompare = icmp sgt i32 %1, 0
+  br i1 %gtcompare, label %if, label %else
 
-loop_cond:                                        ; preds = %end_assn, %entry
-  %1 = load i32, i32* %i
-  %2 = load i32, i32* @N
-  %ltcompare = icmp slt i32 %1, %2
-  br i1 %ltcompare, label %loop, label %after
+if:                                               ; preds = %entry
+  call void @printlnchar(i8 89)
+  br label %ifcont
 
-loop:                                             ; preds = %loop_cond
-  %3 = load i32, i32* %i
-  %4 = add i32 0, %3
-  %A_Index = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %4
-  %5 = call i32 @readint()
-  store i32 %5, i32* %A_Index
-  br label %end_assn
+else:                                             ; preds = %entry
+  %2 = load i32, i32* %N
+  call void @printlnint(i32 %2)
+  br label %ifcont
 
-end_assn:                                         ; preds = %loop
-  %6 = load i32, i32* %i
-  %add = add i32 %6, 1
-  store i32 %add, i32* %i
-  br label %loop_cond
-
-after:                                            ; preds = %loop_cond
-  call void @insertionSort()
-  store i32 0, i32* %i
-  br label %loop_cond1
-
-loop_cond1:                                       ; preds = %end_assn5, %after
-  %7 = load i32, i32* %i
-  %8 = load i32, i32* @N
-  %ltcompare2 = icmp slt i32 %7, %8
-  br i1 %ltcompare2, label %loop3, label %after7
-
-loop3:                                            ; preds = %loop_cond1
-  %9 = load i32, i32* %i
-  %10 = add i32 0, %9
-  %A_Index4 = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %10
-  %11 = load i32, i32* %A_Index4
-  call void @printint(i32 %11)
-  call void @printchar(i8 32)
-  br label %end_assn5
-
-end_assn5:                                        ; preds = %loop3
-  %12 = load i32, i32* %i
-  %add6 = add i32 %12, 1
-  store i32 %add6, i32* %i
-  br label %loop_cond1
-
-after7:                                           ; preds = %loop_cond1
-  call void @printlnchar(i8 10)
+ifcont:                                           ; preds = %else, %if
   br label %return
 
-return:                                           ; preds = %after7
+return:                                           ; preds = %ifcont
   ret i32 0
 }
 
 declare i32 @readint()
 
-declare void @printint(i32)
-
-declare void @printchar(i8)
-
 declare void @printlnchar(i8)
+
+declare void @printlnint(i32)
