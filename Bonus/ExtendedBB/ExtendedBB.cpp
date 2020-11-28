@@ -15,6 +15,7 @@ struct ExtendedBB : public FunctionPass {
   map < string, vector <string> > Successors;
   map < string, vector <string> > Predecessors;
   map < string, int > visited;
+  queue <string> Q;
   void dfs(string node, int color)
   {
       if(visited.find(node) != visited.end())
@@ -45,27 +46,21 @@ struct ExtendedBB : public FunctionPass {
         }
         for(BasicBlock *Succ: successors(BB))
             Successors[name].push_back(string(Succ->getName()));
+        if(Predecessors[name].size() > 1 || Predecessors[name].size() == 0)
+            Q.push(name);
     }
     map < string, vector <string> > :: iterator it;
-    
     int color = 0;
-    visited["entry"] = color;
-    int l = Successors["entry"].size();
-    errs() << "entry" << ' ';
-    for(int i = 0; i < l; ++i)
-        dfs(Successors["entry"][i], color);
-    color++;
-    errs() << '\n';
-
-    for(it = Successors.begin(); it != Successors.end(); ++it)
+    while(Q.empty() == false)
     {
-        if(visited.find(it->first) != visited.end())
-            continue;
-        visited[it->first] = color;
-        int l = Successors[it->first].size();
-        errs() << it->first << ' ';
-        for(int i = 0; i < l; ++i)
-            dfs(Successors[it->first][i], color);
+        string node = Q.front();
+        Q.pop();
+        visited[node] = color;
+        errs() << node << ' ';
+        int l = Successors[node].size();
+        for(int i = 0; i < l; ++i){
+            dfs(Successors[node][i], color);
+        }
         color++;
         errs() << '\n';
     }
