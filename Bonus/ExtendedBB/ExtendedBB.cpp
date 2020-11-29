@@ -71,8 +71,9 @@ struct ExtendedBB : public FunctionPass {
                         }
                         vn_var[var_vn[dest]].erase(vn_var[var_vn[dest]].begin() + idx);
                     }
-                    
+                    int found = 0;
                     if(store_expr.find({opcode, {var_vn[var1], var_vn[var2]}}) != store_expr.end()){
+                        found = 1;
                         var_vn[dest] = store_expr[{opcode, {var_vn[var1], var_vn[var2]}}];
                         vn_var[var_vn[dest]].push_back(dest);
                     }
@@ -83,11 +84,14 @@ struct ExtendedBB : public FunctionPass {
                             vn_var[var_vn[dest]] = tmp;
                         }
                         vn_var[var_vn[dest]].push_back(dest);
+                        store_expr[{opcode, {var_vn[var1], var_vn[var2]}}] = var_vn[dest];
                     }
                     //errs() << var1 << " " << var2 << " " << dest << " " << opcode << '\n';
                     for(int spaces = 0; spaces < (int)(60 - instruction_str.size()); ++spaces)
                         errs() << ' ';
                     errs() << "Value Numbering: " << var_vn[dest] << " = " << var_vn[var1] << " " << opcode << " " << var_vn[var2];
+                    if(found)
+                        errs() << "\tFound redundancy";
                 }
             }
             errs() << '\n';
@@ -97,7 +101,7 @@ struct ExtendedBB : public FunctionPass {
 
       int l = Successors[node].size();
       for(int i = 0; i < l; ++i){
-          dfs(Successors[node][i], color, var_vn, vn_var, store_expr, curr_vn);
+            dfs(Successors[node][i], color, var_vn, vn_var, store_expr, curr_vn);
       }
   }
   
@@ -176,10 +180,11 @@ struct ExtendedBB : public FunctionPass {
                         }
                         vn_var[var_vn[dest]].erase(vn_var[var_vn[dest]].begin() + idx);
                     }
-                    
+                    int found = 0;
                     if(store_expr.find({opcode, {var_vn[var1], var_vn[var2]}}) != store_expr.end()){
                         var_vn[dest] = store_expr[{opcode, {var_vn[var1], var_vn[var2]}}];
                         vn_var[var_vn[dest]].push_back(dest);
+                        found = 1;
                     }
                     else{
                         
@@ -194,6 +199,8 @@ struct ExtendedBB : public FunctionPass {
                     for(int spaces = 0; spaces < (int)(60 - instruction_str.size()); ++spaces)
                         errs() << ' ';
                     errs() << "Value Numbering: " << var_vn[dest] << " = " << var_vn[var1] << " " << opcode << " " << var_vn[var2];
+                    if(found)
+                        errs() << "\tFound redundancy";
                 }
             }
             errs() << '\n';
