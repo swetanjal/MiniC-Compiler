@@ -24,3 +24,38 @@
 
     TheFunction->getBasicBlockList().push_back(elseBlock);
     Builder.SetInsertPoint(elseBlock);
+
+
+
+
+    for(Instruction &I: *BB){
+            auto ptr = dyn_cast<User>(&I);
+            auto val = dyn_cast<Value>(&I);
+            string op3 = string(val->getName());
+            string op1;
+            string op2;
+            int i = 1;
+            for (auto it = ptr->op_begin(); it != ptr->op_end(); ++it)
+            {
+                errs() << i << '\n';
+                if(i==1)
+                {
+                    op1 = getValueName(it,op1);
+                }
+                if(i==2)
+                {
+                    op2 = getValueName(it,op2);
+                }
+                i++;
+            }
+
+            errs() << op1 << " " << op2 << " " << op3 << '\n';
+        }
+
+
+        string getValueName(Use *it, std::string op){
+        if ((*it)->hasName()){
+            return op = string((*it)->getName());
+        }
+        return "";
+  }

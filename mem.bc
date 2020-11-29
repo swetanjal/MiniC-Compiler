@@ -1,0 +1,26 @@
+; ModuleID = 'llvmir.bc'
+source_filename = "MiniC compiler"
+
+define i32 @main() {
+entry:
+  %add = add i32 3, 4
+  %add1 = add i32 3, 4
+  %add2 = add i32 %add, %add1
+  %add3 = add i32 %add, %add1
+  %gtcompare = icmp sgt i32 %add2, 0
+  br i1 %gtcompare, label %if, label %else
+
+if:                                               ; preds = %entry
+  %add4 = add i32 %add2, %add
+  br label %ifcont
+
+else:                                             ; preds = %entry
+  %add5 = add i32 %add3, %add1
+  br label %ifcont
+
+ifcont:                                           ; preds = %else, %if
+  br label %return
+
+return:                                           ; preds = %ifcont
+  ret i32 0
+}

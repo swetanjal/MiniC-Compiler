@@ -1,15 +1,19 @@
 int main()
 {
-    int N;
-    N = read_int();
-    if(N > 0)
+    int N, M, a, b, c;
+    a = 3;
+    M = a + 4;
+    N = a + 4;
+    a = M + N;
+    b = M + N;
+    if(a > 0)
     {
-        println('Y');
+        c = a + M;
     }
     else
     {
-        println(N);
+        c = b + N;
     }
-       
+    
     return 0;
 }
