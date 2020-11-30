@@ -19,10 +19,12 @@ int main()
     res = isPrime(N);
     if(res == true)
     {
-        println(1);
+        print(N);
+        println(" is a prime number");
     }
     else{
-        println(0);
+        print(N);
+        println(" is not a prime number.");
     }
     return 0;
 }

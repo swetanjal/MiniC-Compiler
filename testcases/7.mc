@@ -1,5 +1,7 @@
 int A[1000];
 int N;
+int output[1000];
+int count[10];
 int getMax() 
 { 
     int mx, i;
@@ -16,8 +18,8 @@ int getMax()
 
 void countSort(int exp) 
 { 
-    int output[N]; 
-    int i, count[10]; 
+     
+    int i; 
     
     for(i = 0; i < 10; i = i + 1)
     {

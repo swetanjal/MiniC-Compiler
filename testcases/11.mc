@@ -1,18 +1,22 @@
+int small[26], caps[26];
 int main()
 {
-    FILE fp;
-    int c, i, small[26], caps[26];
-    
-    
-    fp = fopen("test.txt", "r");
+    int c, i, idx;
+    char EOF;
+    EOF = '\0';
     for(i = 0; i < 26; i = i + 1)
     {
         small[i] = 0;
         caps[i] = 0;
     }
+    idx = 0;
     while (true) 
     {
-       c = fgetc(fp);
+       c = fileGetChar("a.txt", idx);
+       if(c == EOF)
+       {
+           break;
+       }
        if(c >= 65 && c <= 90)
        {
            caps[c - 65] = caps[c - 65] + 1;
@@ -21,10 +25,7 @@ int main()
        {
            small[c - 97] = small[c - 97] + 1;
        }
-       if(c == EOF)
-       {
-           break;
-       }
+       idx = idx + 1;
     }
 
     for(i = 0; i < 26; i = i + 1)

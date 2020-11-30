@@ -1,97 +1,70 @@
-FILE fp;
-int c;
-string A[1000000];
-
-void sort(int l, int r)
-{
-    int i;
-    string tmp[r - l + 1];
-    int sz, mid, l_ptr, r_ptr, c;
-    sz = r - l + 1;
-    if(sz == 1)
-    {
-        return;
-    }
-    mid = (l + r) / 2;
-    sort(l, mid);
-    sort(mid + 1, r);
-    c = 0;
-    l_ptr = l; r_ptr = mid + 1;
-    while(l_ptr <= mid && r_ptr <= r)
-    {
-        if(A[l_ptr] < A[r_ptr])
-        {
-            tmp[c] = A[l_ptr];
-            c = c + 1;
-            l_ptr = l_ptr + 1;
-        }
-        else
-        {
-            tmp[c] = A[r_ptr];
-            c = c + 1;
-            r_ptr = r_ptr + 1;
-        }
-    }
-    while(l_ptr <= mid)
-    {
-        tmp[c] = A[l_ptr];
-        c = c + 1;
-        l_ptr = l_ptr + 1;
-    }
-    while(r_ptr <= r)
-    {
-        tmp[c] = A[r_ptr];
-        c = c + 1;
-        r_ptr = r_ptr + 1;
-    }
-    for(i = l; i <= r; i = i + 1)
-    {
-        A[i] = tmp[i - l];
-    }
-}
-
-
+char A[100][100];
+int cnt, ptr;
 int main()
 {
-    int res, i;
-    string curr;
-    curr = "";
-    c = 0;
-    res = 0;
-    fp = fopen("test.txt", "r");
+    char EOF, c;
+    int idx, l, m;
+    EOF = '\0';
+    cnt = 0;
+    idx = 0;
+    ptr = 0;
+    for(l = 0; l < 100; l = l + 1)
+    {
+        for(m = 0; m < 100; m = m + 1)
+        {
+            A[l][m] = '\0';
+        }
+    }
     while(true)
     {
-        c = fgetc(fp);
-        if(c == '\n' || c == ' ')
+        c = fileGetChar("a.txt", idx);
+        
+        if(c == ' ' || c == '\n' || c == EOF)
         {
-            A[c] = curr;
-            c = c + 1;
-            curr = "";
-            continue;
+            int i;
+            int found;
+            found = 0;
+            for(i = 0; i < cnt; i = i + 1)
+            {
+                int j;
+                int match;
+                match = 0;
+                for(j = 0; true; j = j + 1)
+                {
+                    if(A[i][j] == A[cnt][j] && A[i][j] == '\0')
+                    {
+                        match = 1;
+                        break;
+                    }
+                    if(A[i][j] == A[cnt][j])
+                    {
+                        continue;
+                    }
+                    break;
+                }
+                if(match)
+                {
+                    found = 1;
+                    break;
+                }
+            }
+            if(found == 0)
+            {
+                cnt = cnt + 1;
+            }
+            ptr = 0;
+            if(c == EOF)
+            {
+                break;
+            }
         }
         else
         {
-            curr = curr + c;
+            A[cnt][ptr] = c;
+            ptr = ptr + 1;
         }
-        if(c == EOF){
-            A[c] = curr;
-            c = c + 1;
-            curr = "";
-            break;
-        }
+        idx = idx + 1;
     }
-    sort(0, c - 1);
-    for(i = 1; i < c; i = i + 1)
-    {
-        if(A[i] == A[i - 1])
-        {
-            continue;
-        }
-        else{
-            res = res + 1;
-        }
-    }
-    res = res + 1;
-    println("Number of unique words is " + res);
+    println(cnt);
     return 0;
 }
