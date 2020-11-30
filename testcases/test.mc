@@ -1,19 +1,12 @@
+int sum()
+{
+    return 0;
+}
 int main()
 {
-    int N, M, a, b, c;
-    a = 3;
-    M = a + 4;
-    N = a + 4;
-    a = M + N;
-    b = M + N;
-    if(a > 0)
-    {
-        c = a + M;
-    }
-    else
-    {
-        c = b + N;
-    }
-    
+    char c;
+    c = fileGetChar("a.txt", 1000);
+    println(c);
+
     return 0;
 }

@@ -1036,7 +1036,21 @@ Value* ASTFLOATLIT::Codegen()
 }
 Value* ASTSTRINGLIT::Codegen()
 {
-    return nullptr;
+    string v = "";
+    for(int i = 1; i < value.size() - 1; ++i){
+        if(value[i] == '\\' && value[i - 1] == '\\')
+            v = v + '\\';
+        else if(value[i] == 'n' && value[i - 1] == '\\')
+            v = v + '\n';
+        else if(value[i] == 't' && value[i - 1] == '\\')
+            v = v + '\t';
+        else if(value[i] == '\\')
+            continue;
+        else
+            v = v + value[i];
+    }
+        
+    return Builder.CreateGlobalStringPtr(StringRef(v));
 }
 Value* ASTBOOLLIT::Codegen()
 {
@@ -1064,8 +1078,21 @@ Value* ASTCHARLIT::Codegen()
 Value* ASTExprCall::Codegen()
 {
     Function *CalleeF = TheModule->getFunction(name);
-    if (!CalleeF)
-        cout << "Unknown function referenced\n";
+    if(name == "fileGetChar"){
+        //cout << "Hi\n";
+        std::vector<Value *> ArgsV;
+        for (unsigned i = 0, e = args.size(); i != e; ++i) {
+            ArgsV.push_back(args[i]->Codegen());
+        }        
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("fileGetChar", Builder.getInt8Ty(), Builder.getInt8PtrTy(), Builder.getInt32Ty());
+        return Builder.CreateCall(Fn, ArgsV);
+    }
+    if (!CalleeF){
+        // cout << "Unknown function referenced\n";
+        
+    }
+        
 
     // If argument mismatch error.
     if (CalleeF->arg_size() != args.size())
@@ -1204,6 +1231,14 @@ Value* ASTPrint::Codegen()
         auto Fn = M->getOrInsertFunction("printfloat", Builder.getVoidTy(), FloatTy);
         return Builder.CreateCall(Fn, Version);
     }
+    else if(expr->eval_type == "string")
+    {
+        Value* Version = expr->Codegen();
+        auto FloatTy = Builder.getInt8PtrTy();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printstring", Builder.getVoidTy(), FloatTy);
+        return Builder.CreateCall(Fn, Version);
+    }
 }
 Value* ASTPrintln::Codegen()
 {
@@ -1234,6 +1269,14 @@ Value* ASTPrintln::Codegen()
         auto FloatTy = Builder.getFloatTy();
         auto M = Builder.GetInsertBlock()->getModule();
         auto Fn = M->getOrInsertFunction("printlnfloat", Builder.getVoidTy(), FloatTy);
+        return Builder.CreateCall(Fn, Version);
+    }
+    else if(expr->eval_type == "string")
+    {
+        Value* Version = expr->Codegen();
+        auto FloatTy = Builder.getInt8PtrTy();
+        auto M = Builder.GetInsertBlock()->getModule();
+        auto Fn = M->getOrInsertFunction("printlnstring", Builder.getVoidTy(), FloatTy);
         return Builder.CreateCall(Fn, Version);
     }
     return nullptr;

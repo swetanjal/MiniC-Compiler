@@ -1,26 +1,49 @@
 ; ModuleID = 'llvmir.bc'
 source_filename = "MiniC compiler"
 
-define i32 @main() {
+define void @test(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f) {
 entry:
-  %add = add i32 3, 4
-  %add1 = add i32 3, 4
-  %add2 = add i32 %add, %add1
-  %add3 = add i32 %add, %add1
-  %gtcompare = icmp sgt i32 %add2, 0
-  br i1 %gtcompare, label %if, label %else
+  %add = add i32 %a, %b
+  %add7 = add i32 %a, %b
+  br i1 true, label %if, label %else20
 
 if:                                               ; preds = %entry
-  %add4 = add i32 %add2, %add
+  %add8 = add i32 %a, %b
+  %add9 = add i32 %c, %d
+  br i1 true, label %if10, label %else
+
+if10:                                             ; preds = %if
+  %add11 = add i32 %b, 18
+  %add12 = add i32 %a, %b
+  %add13 = add i32 %add11, %f
   br label %ifcont
 
-else:                                             ; preds = %entry
-  %add5 = add i32 %add3, %add1
+else:                                             ; preds = %if
+  %add14 = add i32 %a, 17
+  %add15 = add i32 %c, %d
+  %add16 = add i32 %add14, %f
   br label %ifcont
 
-ifcont:                                           ; preds = %else, %if
-  br label %return
+ifcont:                                           ; preds = %else, %if10
+  %e5.0 = phi i32 [ %add11, %if10 ], [ %add14, %else ]
+  %add17 = add i32 %a, %b
+  %add18 = add i32 %c, %d
+  %add19 = add i32 %e5.0, %f
+  br label %ifcont23
 
-return:                                           ; preds = %ifcont
-  ret i32 0
+else20:                                           ; preds = %entry
+  %add21 = add i32 %c, %d
+  %add22 = add i32 %c, %d
+  br label %ifcont23
+
+ifcont23:                                         ; preds = %else20, %ifcont
+  %add24 = add i32 %a, %b
+  %add25 = add i32 %c, %d
+  ret void
+}
+
+define void @main() {
+entry:
+  call void @test(i32 3, i32 4, i32 5, i32 6, i32 7, i32 0)
+  ret void
 }

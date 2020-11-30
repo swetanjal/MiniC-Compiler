@@ -203,7 +203,7 @@ class PrettyPrint : public ASTvisitor
         else if(node.eval_type == "int")
             cout << "read_int()";
         else if(node.eval_type == "char")
-            cout << "read_int()";
+            cout << "read_char()";
     };
     virtual void visit(ASTPrint &node)
     {

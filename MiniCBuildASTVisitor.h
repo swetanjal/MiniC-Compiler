@@ -12,6 +12,7 @@ void add(ASTVarDecl* node, int line)
 {
     if(curr_table->method_decl.find(node->id->name) != curr_table->method_decl.end() || curr_table->var_decl.find(node->id->name) != curr_table->var_decl.end()){
         cout << "Semantic Error on line " << line << ": Variable " << node->id->name << " is being redeclared.\n"; 
+        errors_IR++;
     }
     else{
         curr_table->var_decl[node->id->name] = node;
@@ -23,6 +24,7 @@ void add(ASTMethodDecl* node, int line)
 {
     if(curr_table->method_decl.find(node->name) != curr_table->method_decl.end() || curr_table->var_decl.find(node->name) != curr_table->var_decl.end()){
         cout << "Semantic Error on line " << line << ": Method " << node->name << " is being redeclared.\n"; 
+        errors_IR++;
     }
     else{
         curr_table->method_decl[node->name] = node;
@@ -49,6 +51,7 @@ ASTDtype* look_up_variable(ASTID* node, int line)
     while(curr != NULL){
         if(curr->method_decl.find(node->name) != curr->method_decl.end()){
             cout << "Semantic Error on line " << line << ": Conflicting Method name " << node->name << endl;
+            errors_IR++;
             return NULL;
             break;
         }
@@ -59,6 +62,7 @@ ASTDtype* look_up_variable(ASTID* node, int line)
         curr = curr->prev;
     }
     cout << "Semantic Error on line " << line << ": Variable " << node->name <<  " being used before declaration\n";
+    errors_IR++;
     return NULL;
 }
 
@@ -70,6 +74,7 @@ int getDimensions(ASTID* node, int line)
     while(curr != NULL){
         if(curr->method_decl.find(node->name) != curr->method_decl.end()){
             cout << "Semantic Error on line " << line << ": Conflicting Method name " << node->name << endl;
+            errors_IR++;
             return -1;
             break;
         }
@@ -80,6 +85,7 @@ int getDimensions(ASTID* node, int line)
         curr = curr->prev;
     }
     cout << "Semantic Error on line " << line << ": Variable " << node->name <<  " being used before declaration\n";
+    errors_IR++;
     return -1;
 }
 
@@ -94,6 +100,7 @@ bool foundMethod(string id, int line)
         if(curr->var_decl.find(id) != curr->var_decl.end()){
             // TO be changed
             cout << "Semantic Error on line " << line << ": "<< id << "() cannot be used as a function." << endl;
+            errors_IR++;
             return false;
         }
         else if(curr->method_decl.find(id) != curr->method_decl.end()){
@@ -102,7 +109,10 @@ bool foundMethod(string id, int line)
         
         curr = curr->prev;
     }
+    if(id == "fileGetChar")
+        return true;
     cout << "Semantic Error on line " << line << ": Method " << id <<  "() being called before declaration\n";
+    errors_IR++;
     return false;
 }
 
@@ -114,6 +124,7 @@ ASTDtype* look_up_method(string id, int line)
         if(curr->var_decl.find(id) != curr->var_decl.end()){
             // TO be changed
             cout << "Semantic Error on line " << line << ": "<< id << "() cannot be used as a function." << endl;
+            errors_IR++;
             return NULL;
         }
         else if(curr->method_decl.find(id) != curr->method_decl.end()){
@@ -122,7 +133,10 @@ ASTDtype* look_up_method(string id, int line)
         
         curr = curr->prev;
     }
+    if(id == "fileGetChar")
+        return NULL;
     cout << "Semantic Error on line " << line << ": Method " << id <<  "() being called before declaration\n";
+    errors_IR++;
     return NULL;
 }
 
@@ -135,6 +149,7 @@ vector <ASTDtype*> getArgTypes(string id, int line){
         if(curr->var_decl.find(id) != curr->var_decl.end()){
             // TO be changed
             cout << "Semantic Error on line " << line << ": "<< id << "() cannot be used as a function." << endl;
+            errors_IR++;
             return dummy;
         }
         else if(curr->method_decl.find(id) != curr->method_decl.end()){
@@ -149,7 +164,10 @@ vector <ASTDtype*> getArgTypes(string id, int line){
         
         curr = curr->prev;
     }
+    if(id == "fileGetChar")
+        return dummy;
     cout << "Semantic Error on line " << line << ": Method " << id <<  "() being called before declaration\n";
+    errors_IR++;
     return dummy;
 }
 
@@ -367,6 +385,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
     public:
     virtual antlrcpp::Any visitProgram(MiniCParser::ProgramContext *context) override
     {
+
         ASTProg *node = new ASTProg();
         for(auto decl: context->decl()){
             vector <ASTDecl*> vec = visit(decl);
@@ -398,10 +417,12 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             
             if(node->id->addrs.size() > 0 && insideMethod){
                 cout << "Semantic Error on line " << line << ": Arrays need to be declared at a global scope.\n";
+                errors_IR++;
             }
             for(auto a:node->id->addrs){
                 if(a->type != "int_lit"){
                     cout << "Semantic Error on line " << line << ": Constant integer literal expected\n";
+                    errors_IR++;
                 }
             }
             add(node, line);
@@ -594,6 +615,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         if(c != 1)
         {
             cout << "Semantic Error on line " << line << ": Expected exactly one condition inside for loop.\n";
+            errors_IR++;
         }
         c = 0;
         while(ctx->assignmentbeg(c) != NULL){
@@ -633,6 +655,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "break";
         if(insideLoop == 0){
             cout << "Semantic Error on line " << line << ": Encountered break statement outside Loop block.\n";
+            errors_IR++;
         }
         return (ASTStat*)node;
     }
@@ -643,6 +666,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "continue";
         if(insideLoop == 0){
             cout << "Semantic Error on line " << line << ": Encountered continue statement outside Loop block.\n";
+            errors_IR++;
         }
         return (ASTStat*)node;
     }
@@ -664,6 +688,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             //cout << "hello\n";
             node->expr = NULL;
             cout << "Semantic Error on line " << line << ": Invalid returning value. Returning nothing but expected " << datatype_method << endl;            
+            errors_IR++;
             return (ASTStat*)node;
         }
         if(count == 0 && datatype_method == "void")
@@ -678,6 +703,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->expr->eval_type != ""){
             cout << "Semantic Error on line " << line << ": Return Type Mismatch. Invalid Conversion from " << node->expr->eval_type << " to " << datatype_method << endl;
+            errors_IR++;
         }
         return (ASTStat*)node;
     }
@@ -716,12 +742,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         if(org_dims != addrs_dim){
             cout << "Semantic Error on line " << line << ": Dimensions don't match. Expected " << org_dims << " dimensions but got " << addrs_dim << " dimensions\n";
-            
+            errors_IR++;
         }
 
 
         if(dat!= NULL && canBeAssigned(dat->dtype, node->expr->eval_type) == false && node->expr->eval_type != ""){
             cout << "Semantic Error on line " << line << ": Expected " << dat->dtype << " but found " << node->expr->eval_type << " while assigning to variable " << node->id->name  << endl;
+            errors_IR++;
         }
         // cout << ((ASTINTLIT*)(node->expr))->value;
         return (ASTAssign *) node;
@@ -756,8 +783,13 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             }
             
             if(express.size() != vec.size()){
-                cout << "Semantic Error on line " << line << ": Number of arguments do not match definition of " << ctx->ID()->getText() << "()\n";
-                node->eval_type = "";
+                if(ctx->ID()->getText() == "fileGetChar")
+                    node->eval_type = "char";
+                else{
+                    cout << "Semantic Error on line " << line << ": Number of arguments do not match definition of " << ctx->ID()->getText() << "()\n";
+                    errors_IR++;
+                    node->eval_type = "";
+                }
             }
             else{
                 int ok = 1;
@@ -769,6 +801,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
                     }
                     else{
                         cout << "Semantic Error on line " << line << ": Type of arguments at position " << cnt << " do not match definition of " << ctx->ID()->getText() << "(). Expected " << arg->dtype << " but found " << express[cnt- 1]->eval_type << endl;
+                        errors_IR++;
                         ok = 0;
                     }
                     // cnt++;
@@ -803,8 +836,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
 
         if(node->true_expr->eval_type == "" || node->false_expr->eval_type == ""){
         }
-        else if(node->eval_type == "")
+        else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Different data types for true and false expressions.\n";
+            errors_IR++;
+        }
         return (ASTExpr *)node;
     }
 
@@ -829,6 +864,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform || on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
         
         
@@ -850,6 +886,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform && on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
 
 
@@ -875,6 +912,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform == on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
         
         
@@ -900,6 +938,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform != on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
 
 
@@ -921,6 +960,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform >= on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
 
 
@@ -943,6 +983,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform > on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
 
 
@@ -968,6 +1009,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform < on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }        
         
         return (ASTExpr *)node;
@@ -992,6 +1034,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform <= on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
 
         return (ASTExpr *)node;
@@ -1012,6 +1055,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform subtraction on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
         
         
@@ -1034,6 +1078,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform addition on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
         
         return (ASTExpr *)node;
@@ -1058,6 +1103,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform modulo on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
 
         return (ASTExpr *)node;
@@ -1083,6 +1129,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform division on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         } 
         
         return (ASTExpr *)node;
@@ -1104,6 +1151,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         }
         else if(node->eval_type == ""){
             cout << "Semantic Error on line " << line << ": Type mismatch. Cannot perform multiplication on " << node->left->eval_type << " and " << node->right->eval_type << endl;
+            errors_IR++;
         }
         return (ASTExpr *)node;
     }
@@ -1122,6 +1170,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             org_dims = getDimensions(node, line);
             if(org_dims != addrs_dim){
                 cout << "Semantic Error on line " << line << ": Dimensions don't match. Expected " << org_dims << " dimensions but got " << addrs_dim << " dimensions\n";
+                errors_IR++;
                 node->eval_type = "";
             }
         }
@@ -1147,8 +1196,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->expr = visit(ctx->expr());
 
         node->eval_type = logicalCompatible(node->expr->eval_type);
-        if(node->eval_type == "" && node->expr->eval_type != "")
+        if(node->eval_type == "" && node->expr->eval_type != ""){
             cout << "Semantic Error on line " << line << ": Cannot apply Not operator on " << node->expr->eval_type << endl;
+            errors_IR++;
+        }
         return (ASTExpr*) node;
     }
 
@@ -1158,8 +1209,10 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         node->type = "neg";
         node->expr = visit(ctx->expr());
         node->eval_type = addSubMulDivCompatible(node->expr->eval_type);
-        if(node->eval_type == "" && node->expr->eval_type != "")
+        if(node->eval_type == "" && node->expr->eval_type != ""){
             cout << "Semantic Error on line " << line << ": Cannot apply Negate operator on " << node->expr->eval_type << endl;
+            errors_IR++;
+        }
         return (ASTExpr*) node;
     }
 
@@ -1198,6 +1251,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
         {
             cout << "Semantic Error on line " << line << ": Bad Cast!\n";
             node->eval_type = "";
+            errors_IR++;
         }
         else{
             node->eval_type = node->dat->dtype;
@@ -1228,6 +1282,7 @@ class MiniCBuildASTVisitor : public MiniCVisitor
             if(node->addrs[c]->eval_type != "int" && node->addrs[c]->eval_type != "")
             {
                 cout << "Semantic Error on line " << line << ": Address has to be of type int. Got " << node->addrs[c]->eval_type << endl;;
+                errors_IR++;
             }
             c++;
         }

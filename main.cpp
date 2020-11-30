@@ -32,8 +32,35 @@ int main(int argc, const char* argv[]) {
     PrettyPrint *pv = new PrettyPrint();
     pv->visit(*program_root);
     // Time to generate LLVM IR
-    program_root->Codegen();
-    if(errors_IR == 0)
+    
+    if(errors_IR == 0){
+        program_root->Codegen();
         program_root->generateCodeDump();
+    }
+        
+    else
+    {
+        std::vector<Type*> Doubles(0,
+                             Type::getDoubleTy(Context));
+        FunctionType *FT = FunctionType::get(Type::getVoidTy(Context), Doubles, false);
+        Function *F = Function::Create(FT, Function::ExternalLinkage, "main", TheModule);
+        BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
+        Builder.SetInsertPoint(BB);
+        AllocaInst *allocaMem = allocateMemory(F, "a", "int");
+        NamedValues["a"] = allocaMem;
+        Builder.CreateStore(ConstantInt::get(Context, APInt(32, 1)) ,allocaMem);
+        Builder.CreateRetVoid();
+        
+        verifyFunction(*F);
+        //cerr << "Generating LLVM IR Code\n\n";
+        std::string Str;
+        raw_string_ostream OS(Str);
+        OS << *TheModule;
+        OS.flush();
+        ofstream out("llvmir.bc");
+        out << Str;
+        out.close();
+        //cerr << "Finished writing to llvmir.bc\n";
+    }
     return 0;
 }

@@ -1,5 +1,17 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
+char fileGetChar(char *f, int idx)
+{
+    FILE *fp;
+    char buff[100001];
+    fp = fopen(f, "r");
+    fgets(buff, 100000, (FILE*)fp);
+    fclose(fp);
+    if(idx > 100000)
+        return '\0';
+    return buff[idx];
+}
 
 int float_to_int(float a)
 {
@@ -74,4 +86,12 @@ void printfloat(float a)
 void printlnfloat(float a)
 {
     printf("%f\n", a);
+}
+void printstring(char* a)
+{
+    printf("%s", a);
+}
+void printlnstring(char* a)
+{
+    printf("%s\n", a);
 }
