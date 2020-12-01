@@ -833,7 +833,65 @@ Value* ASTExprBinary::Codegen()
 }
 Value* ASTExprTernary::Codegen()
 {
-    return nullptr;
+    Value *CondV = cond->Codegen();
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    BasicBlock *ifBlock = BasicBlock::Create(Context, "true_block", TheFunction);
+    BasicBlock *elseBlock = BasicBlock::Create(Context, "false_block");
+    BasicBlock *MergeBB = BasicBlock::Create(Context, "mergeBB");
+
+    if(cond->eval_type == "int")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(32, 0)), "ifcond"); 
+    }
+    else if(cond->eval_type == "bool")
+    {
+        CondV = CondV;
+    }
+    else if(cond->eval_type == "float")
+    {
+        CondV = Builder.CreateFCmpUNE(CondV, ConstantFP::get(Context, APFloat(0.0)), "ifcond");
+    }
+    else if(cond->eval_type == "char")
+    {
+        CondV = Builder.CreateICmpNE(CondV, ConstantInt::get(Context, APInt(8, 0)), "ifcond");
+    }
+    
+
+    Builder.CreateCondBr(CondV, ifBlock, elseBlock);
+    
+    
+    Builder.SetInsertPoint(ifBlock);
+    //required_extra_block += 1;
+    Value *ThenV = true_expr->Codegen();
+    //required_extra_block -= 1;
+    Builder.CreateBr(MergeBB);
+    ifBlock = Builder.GetInsertBlock();
+
+    
+    TheFunction->getBasicBlockList().push_back(elseBlock);
+    Builder.SetInsertPoint(elseBlock);
+    //required_extra_block += 1;
+    Value *ElseV = false_expr->Codegen();
+    //required_extra_block -= 1;
+    Builder.CreateBr(MergeBB);
+    // codegen of 'Else' can change the current block, update ElseBB for the PHI.
+    elseBlock = Builder.GetInsertBlock();
+
+    TheFunction->getBasicBlockList().push_back(MergeBB);
+    Builder.SetInsertPoint(MergeBB);
+
+    PHINode *PN;
+    if(false_expr->eval_type == "int")
+        PN = Builder.CreatePHI(Type::getInt32Ty(Context), 2, "iftmp");
+    else if(false_expr->eval_type == "char")
+        PN = Builder.CreatePHI(Type::getInt8Ty(Context), 2, "iftmp");
+    else if(false_expr->eval_type == "bool")
+        PN = Builder.CreatePHI(Type::getInt1Ty(Context), 2, "iftmp");
+    else if(false_expr->eval_type == "float")
+        PN = Builder.CreatePHI(Type::getFloatTy(Context), 2, "iftmp");
+    PN->addIncoming(ThenV, ifBlock);
+    PN->addIncoming(ElseV, elseBlock);
+    return PN;
 }
 Value* ASTAssign::Codegen()
 {

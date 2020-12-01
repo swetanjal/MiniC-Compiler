@@ -1,12 +1,7 @@
-int sum()
-{
-    return 0;
-}
 int main()
 {
-    char c;
-    c = fileGetChar("a.txt", 1000);
-    println(c);
-
+    int a;
+    a = (3 > 4) ? 9 : 11;
+    println(a);
     return 0;
 }
